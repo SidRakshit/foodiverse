@@ -1,11 +1,11 @@
 import BaseBuildingInterior from './BaseBuildingInterior';
 import { SceneType } from '../types';
 
-class NewmanInterior extends BaseBuildingInterior {
-  public type: SceneType = 'newman';
+class TurnerInterior extends BaseBuildingInterior {
+  public type: SceneType = 'turner';
 
   protected getBuildingName(): string {
-    return 'Newman Library';
+    return 'Turner Library';
   }
 
   protected generateInterior(): any[][] {
@@ -14,7 +14,7 @@ class NewmanInterior extends BaseBuildingInterior {
     for (let y = 0; y < this.roomHeight; y++) {
       interior[y] = [];
       for (let x = 0; x < this.roomWidth; x++) {
-        // Create the layout for Newman Library
+        // Create the layout for Turner Library
         
         // Outer walls
         if (x === 0 || x === this.roomWidth - 1 || y === 0 || y === this.roomHeight - 1) {
@@ -64,7 +64,7 @@ class NewmanInterior extends BaseBuildingInterior {
   }
 
   protected renderBuildingSpecificElements(ctx: CanvasRenderingContext2D): void {
-    // Newman Library specific elements
+    // Turner Library specific elements
     
     // Library circulation desk
     ctx.fillStyle = '#8B4513'; // Brown wood
@@ -82,7 +82,7 @@ class NewmanInterior extends BaseBuildingInterior {
     ctx.fillStyle = '#FF8C00';
     ctx.font = 'bold 16px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('NEWMAN LIBRARY', 400 - this.cameraX, 30 - this.cameraY);
+    ctx.fillText('TURNER LIBRARY', 400 - this.cameraX, 30 - this.cameraY);
     
     // Reading area signs
     ctx.fillStyle = '#8B0000';
@@ -111,4 +111,4 @@ class NewmanInterior extends BaseBuildingInterior {
   }
 }
 
-export default NewmanInterior;
+export default TurnerInterior;

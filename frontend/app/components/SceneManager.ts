@@ -2,7 +2,7 @@ import Player from './Player';
 import World from './World';
 import InputHandler from './InputHandler';
 import BurrussInterior from './campus/BurrussInterior';
-import NewmanInterior from './campus/NewmanInterior';
+import TurnerInterior from './campus/TurnerInterior';
 import TorgersenInterior from './campus/TorgersenInterior';
 import SquiresInterior from './campus/SquiresInterior';
 import TotsDownstairs from './off-campus/TotsDownstairs';
@@ -31,7 +31,7 @@ class SceneManager {
     
     // Campus building interiors
     this.scenes.set('burruss', new BurrussInterior());
-    this.scenes.set('newman', new NewmanInterior());
+    this.scenes.set('turner', new TurnerInterior());
     this.scenes.set('torgersen', new TorgersenInterior());
     this.scenes.set('squires', new SquiresInterior());
     
