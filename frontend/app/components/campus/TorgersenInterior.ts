@@ -5,7 +5,7 @@ class TorgersenInterior extends BaseBuildingInterior {
   public type: SceneType = 'torgersen';
 
   protected getBuildingName(): string {
-    return 'Torgersen Hall - College of Engineering';
+    return 'Torgersen Hall - Computer Science Department';
   }
 
   protected generateInterior(): any[][] {
@@ -14,7 +14,7 @@ class TorgersenInterior extends BaseBuildingInterior {
     for (let y = 0; y < this.roomHeight; y++) {
       interior[y] = [];
       for (let x = 0; x < this.roomWidth; x++) {
-        // Create the layout for Torgersen Engineering Hall
+        // Create the layout for Torgersen Computer Science Hall
         
         // Outer walls
         if (x === 0 || x === this.roomWidth - 1 || y === 0 || y === this.roomHeight - 1) {
@@ -28,13 +28,13 @@ class TorgersenInterior extends BaseBuildingInterior {
         else if (x >= 2 && x <= 7 && y >= 2 && y <= 8 && (x + y) % 2 === 0) {
           interior[y][x] = { type: 'furniture', solid: true, furniture: 'computer' };
         }
-        // Engineering workbenches (right side)
+        // Software development workstations (right side)
         else if (x >= 12 && x <= 17 && y >= 3 && y <= 6) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'desk' };
+          interior[y][x] = { type: 'furniture', solid: true, furniture: 'computer' };
         }
-        // Lab equipment area
+        // Data science research area
         else if (x >= 12 && x <= 17 && y >= 8 && y <= 11) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'table' };
+          interior[y][x] = { type: 'furniture', solid: true, furniture: 'computer' };
         }
         // Chairs for workstations
         else if ((x >= 2 && x <= 7 && y >= 2 && y <= 8 && (x + y) % 2 === 1) ||
@@ -56,13 +56,13 @@ class TorgersenInterior extends BaseBuildingInterior {
   }
 
   protected renderBuildingSpecificElements(ctx: CanvasRenderingContext2D): void {
-    // Torgersen Hall Gothic Revival Architecture and Engineering Elements
+    // Torgersen Hall Gothic Revival Architecture and Computer Science Elements
     
     // Gothic architectural details on walls
     this.renderGothicArchDetails(ctx);
     
-    // Engineering lab equipment with more modern appearance
-    ctx.fillStyle = '#4A4A4A'; // Gray metal
+    // Computer science servers and workstations
+    ctx.fillStyle = '#1A1A1A'; // Dark server racks
     ctx.fillRect(400 - this.cameraX, 250 - this.cameraY, 80, 40);
     ctx.fillRect(500 - this.cameraX, 250 - this.cameraY, 80, 40);
     
@@ -81,27 +81,27 @@ class TorgersenInterior extends BaseBuildingInterior {
     ctx.fillText('TORGERSEN HALL', 400 - this.cameraX, 30 - this.cameraY);
     ctx.fillStyle = '#FF8C00'; // VT Orange
     ctx.font = 'bold 14px serif';
-    ctx.fillText('COLLEGE OF ENGINEERING', 400 - this.cameraX, 50 - this.cameraY);
+    ctx.fillText('COMPUTER SCIENCE DEPARTMENT', 400 - this.cameraX, 50 - this.cameraY);
     ctx.fillStyle = '#C8B99C';
     ctx.font = '10px serif';
     ctx.fillText('EST. 1872 • VIRGINIA TECH', 400 - this.cameraX, 65 - this.cameraY);
     
-    // Elegant departmental signs with Gothic styling
+    // Computer Science departmental signs with Gothic styling
     ctx.fillStyle = '#2F2F2F';
     ctx.font = '14px serif';
     ctx.textAlign = 'left';
-    ctx.fillText('⚡ Electrical & Computer Engineering', 80 - this.cameraX, 100 - this.cameraY);
-    ctx.fillText('🔧 Mechanical Engineering Lab', 400 - this.cameraX, 200 - this.cameraY);
-    ctx.fillText('💻 Engineering Design Studio', 400 - this.cameraX, 320 - this.cameraY);
+    ctx.fillText('💻 Computer Science Lab', 80 - this.cameraX, 100 - this.cameraY);
+    ctx.fillText('🖥️ Software Engineering Studio', 400 - this.cameraX, 200 - this.cameraY);
+    ctx.fillText('⚡ Data Science & AI Research', 400 - this.cameraX, 320 - this.cameraY);
     
     // Gothic stone columns (decorative)
     this.renderGothicColumns(ctx);
     
-    // Advanced engineering elements
+    // Computer science code display
     ctx.strokeStyle = '#4A4A4A';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    // CAD workstation diagrams
+    // Programming workstation display
     ctx.moveTo(50 - this.cameraX, 140 - this.cameraY);
     ctx.lineTo(150 - this.cameraX, 140 - this.cameraY);
     ctx.lineTo(150 - this.cameraX, 180 - this.cameraY);
@@ -109,7 +109,15 @@ class TorgersenInterior extends BaseBuildingInterior {
     ctx.closePath();
     ctx.stroke();
     
-    // VT Engineering logo with Gothic styling
+    // Add code snippet display
+    ctx.fillStyle = '#00FF00';
+    ctx.font = '8px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('def algorithm():', 55 - this.cameraX, 155 - this.cameraY);
+    ctx.fillText('    return result', 55 - this.cameraX, 165 - this.cameraY);
+    ctx.fillText('print("Hello CS!")', 55 - this.cameraX, 175 - this.cameraY);
+    
+    // VT Computer Science logo with Gothic styling
     ctx.fillStyle = '#8B0000';
     ctx.fillRect(350 - this.cameraX, 75 - this.cameraY, 120, 50);
     ctx.fillStyle = '#E8DCC6'; // Limestone color
@@ -119,8 +127,8 @@ class TorgersenInterior extends BaseBuildingInterior {
     ctx.textAlign = 'center';
     ctx.fillText('VT', 410 - this.cameraX, 95 - this.cameraY);
     ctx.font = 'bold 10px serif';
-    ctx.fillText('ENGINEERING', 410 - this.cameraX, 110 - this.cameraY);
-    ctx.fillText('EXCELLENCE', 410 - this.cameraX, 120 - this.cameraY);
+    ctx.fillText('COMPUTER SCI', 410 - this.cameraX, 110 - this.cameraY);
+    ctx.fillText('INNOVATION', 410 - this.cameraX, 120 - this.cameraY);
     
     // Modern cable management with Gothic aesthetic
     ctx.fillStyle = '#2F2F2F';

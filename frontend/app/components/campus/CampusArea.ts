@@ -34,7 +34,7 @@ class CampusArea extends BaseArea {
     // Turner Place
     this.createBuilding(world, 3, 2, 5, 4, 'turner');
     
-    // Torgersen Hall (Engineering) - Large Gothic Revival building with bridge
+    // Torgersen Hall (Computer Science) - Large Gothic Revival building with bridge
     this.createTorgersenHall(world, 16, 1, 8, 5);
     
     // Prichard Hall (Dining)
@@ -394,6 +394,9 @@ class CampusArea extends BaseArea {
       ctx.fillStyle = '#65686b';
       ctx.fillRect(x, y + 8, this.tileSize, 2);
       ctx.fillRect(x + 8, y, 2, this.tileSize);
+      
+      // Add minimal windows to other buildings
+      this.renderMinimalWindow(ctx, x, y);
     }
   }
 
@@ -424,7 +427,8 @@ class CampusArea extends BaseArea {
     ctx.lineTo(x + this.tileSize / 2 + (offset * this.tileSize / 4), y + this.tileSize);
     ctx.stroke();
     
-    // No Gothic details - keep building clean and simple
+    // Add minimal windows to Torgersen
+    this.renderMinimalWindow(ctx, x, y);
     
     // Stone weathering and texture details
     ctx.fillStyle = '#85888b';
@@ -473,7 +477,8 @@ class CampusArea extends BaseArea {
     ctx.fillStyle = '#85888b'; // Lighter version of base color
     ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     
-    // No windows - keep building clean and simple
+    // Add minimal windows to Burruss towers
+    this.renderMinimalWindow(ctx, x, y);
     
     // Stone courses (horizontal lines)
     ctx.strokeStyle = '#65686b';
@@ -565,6 +570,36 @@ class CampusArea extends BaseArea {
     ctx.strokeRect(x, y, this.tileSize, this.tileSize);
   }
 
+  private renderMinimalWindow(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Only add windows occasionally to keep them minimal
+    const shouldAddWindow = (Math.floor(x / this.tileSize) + Math.floor(y / this.tileSize)) % 3 === 0;
+    
+    if (shouldAddWindow) {
+      // Simple rectangular window
+      const windowWidth = 6;
+      const windowHeight = 8;
+      const windowX = x + (this.tileSize - windowWidth) / 2;
+      const windowY = y + (this.tileSize - windowHeight) / 2;
+      
+      // Window frame (dark)
+      ctx.fillStyle = '#2F2F2F';
+      ctx.fillRect(windowX - 1, windowY - 1, windowWidth + 2, windowHeight + 2);
+      
+      // Window glass (light blue with subtle reflection)
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(windowX, windowY, windowWidth, windowHeight);
+      
+      // Window cross divider (minimal)
+      ctx.fillStyle = '#2F2F2F';
+      ctx.fillRect(windowX + windowWidth/2 - 0.5, windowY, 1, windowHeight);
+      ctx.fillRect(windowX, windowY + windowHeight/2 - 0.5, windowWidth, 1);
+      
+      // Subtle glass reflection
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(windowX + 1, windowY + 1, 2, windowHeight - 2);
+    }
+  }
+
   private renderBuildingSigns(ctx: CanvasRenderingContext2D): void {
     // Reset shadow effects
     ctx.shadowBlur = 0;
@@ -654,16 +689,16 @@ class CampusArea extends BaseArea {
   }
 
   private renderCampusRoadTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-    // Bright grey road surface (1 pixel wide appearance)
-    ctx.fillStyle = '#C0C0C0'; // Bright grey color as requested
+    // Light yellow road surface (1 pixel wide appearance)
+    ctx.fillStyle = '#FFFFE0'; // Light yellow color
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Add subtle texture to make it look like concrete/asphalt
-    ctx.fillStyle = '#D0D0D0'; // Slightly lighter grey for texture
+    ctx.fillStyle = '#FFFACD'; // Slightly lighter yellow for texture
     ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     
     // Very subtle edges to define the road
-    ctx.fillStyle = '#B0B0B0'; // Slightly darker edge
+    ctx.fillStyle = '#F0E68C'; // Slightly darker yellow edge
     ctx.fillRect(x, y, this.tileSize, 1); // Top edge
     ctx.fillRect(x, y + this.tileSize - 1, this.tileSize, 1); // Bottom edge
     ctx.fillRect(x, y, 1, this.tileSize); // Left edge
