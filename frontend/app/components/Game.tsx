@@ -2,30 +2,39 @@
 
 import { useEffect, useRef, useState } from 'react';
 import GameEngine from './GameEngine';
+import CharacterSelection from './CharacterSelection';
+import { PlayerCharacter } from './CharacterData';
 
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameEngineRef = useRef<GameEngine | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [playerCharacter, setPlayerCharacter] = useState<PlayerCharacter | null>(null);
+  const [showCharacterSelection, setShowCharacterSelection] = useState(true);
+
+  const handleCharacterSelected = (character: PlayerCharacter) => {
+    setPlayerCharacter(character);
+    setShowCharacterSelection(false);
+  };
 
   useEffect(() => {
-    if (canvasRef.current && !gameEngineRef.current) {
+    if (canvasRef.current && !gameEngineRef.current && playerCharacter && !showCharacterSelection) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      
+
       if (ctx) {
         // Set canvas size
         canvas.width = 800;
         canvas.height = 600;
-        
+
         // Enable pixel-perfect rendering
         ctx.imageSmoothingEnabled = false;
-        
-        // Initialize game engine
-        gameEngineRef.current = new GameEngine(canvas, ctx);
+
+        // Initialize game engine with character data
+        gameEngineRef.current = new GameEngine(canvas, ctx, playerCharacter);
         gameEngineRef.current.start();
         setIsLoaded(true);
-        
+
         // Focus canvas for keyboard input
         canvas.focus();
       }
@@ -36,7 +45,11 @@ const Game: React.FC = () => {
         gameEngineRef.current.stop();
       }
     };
-  }, []);
+  }, [playerCharacter, showCharacterSelection]);
+
+  if (showCharacterSelection) {
+    return <CharacterSelection onCharacterSelected={handleCharacterSelected} />;
+  }
 
   return (
     <div className="relative game-ui">

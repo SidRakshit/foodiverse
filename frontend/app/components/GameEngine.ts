@@ -3,6 +3,7 @@ import World from './World';
 import InputHandler from './InputHandler';
 import SceneManager from './SceneManager';
 import FridgeManager from './FridgeManager';
+import { PlayerCharacter } from './CharacterData';
 
 class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -14,15 +15,15 @@ class GameEngine {
   private animationFrameId: number | null = null;
   private isRunning: boolean = false;
 
-  constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, playerCharacter: PlayerCharacter) {
     this.canvas = canvas;
     this.ctx = ctx;
-    
+
     // Initialize game objects
-    this.player = new Player(400, 912); // Starting position in campus area (608 + 304)
+    this.player = new Player(400, 912, playerCharacter); // Starting position in campus area (608 + 304)
     this.inputHandler = new InputHandler();
     this.sceneManager = new SceneManager(this.player, this.inputHandler);
-    
+
     // Bind the game loop
     this.gameLoop = this.gameLoop.bind(this);
   }

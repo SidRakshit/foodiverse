@@ -2,6 +2,7 @@ import InputHandler from './InputHandler';
 import { Scene } from './types';
 import FridgeManager from './FridgeManager';
 import { BackendChecker } from '../utils/BackendChecker';
+import { PlayerCharacter } from './CharacterData';
 
 class Player {
   public x: number;
@@ -14,7 +15,7 @@ class Player {
   private animationTimer: number = 0;
   private animationSpeed: number = 200; // ms per frame
   private isMoving: boolean = false;
-  
+
   // Chat functionality
   private isChatting: boolean = false;
   private currentMessage: string = '';
@@ -26,9 +27,13 @@ class Player {
   private nearbyFridge: string | null = null;
   private playerId: string = 'player1'; // This should be set based on actual player identity
 
-  constructor(x: number, y: number) {
+  // Character data
+  private playerCharacter: PlayerCharacter;
+
+  constructor(x: number, y: number, playerCharacter: PlayerCharacter) {
     this.x = x;
     this.y = y;
+    this.playerCharacter = playerCharacter;
     this.setupChatEventListeners();
   }
 
@@ -114,27 +119,30 @@ class Player {
   render(ctx: CanvasRenderingContext2D, cameraX: number = 0, cameraY: number = 0): void {
     // Create a simple pixel-art character
     const scale = 2; // Scale up for visibility
-    
+
     // Calculate screen position relative to camera
     const screenX = this.x - cameraX;
     const screenY = this.y - cameraY;
-    
+
     ctx.save();
     ctx.scale(scale, scale);
-    
+
     const drawX = Math.floor(screenX / scale);
     const drawY = Math.floor(screenY / scale);
 
     // Draw character body (simple 8x8 sprite)
     this.drawPixelArtCharacter(ctx, drawX, drawY, this.direction, this.animationFrame);
-    
+
     ctx.restore();
-    
+
+    // Draw player name above character
+    this.renderPlayerName(ctx, screenX, screenY);
+
     // Draw chat bubble if there's a message or currently typing
     if (this.displayMessage || this.isChatting) {
       this.renderChatBubble(ctx, screenX, screenY);
     }
-    
+
     // Render fridge interaction prompt
     if (this.nearbyFridge && !FridgeManager.getInstance().isFridgeUIOpen()) {
       this.renderFridgePrompt(ctx, screenX, screenY);
@@ -142,19 +150,13 @@ class Player {
   }
 
   private drawPixelArtCharacter(
-    ctx: CanvasRenderingContext2D, 
-    x: number, 
-    y: number, 
-    direction: string, 
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    direction: string,
     frame: number
   ): void {
     const pixelSize = 1;
-    
-    // Define character colors
-    const skinColor = '#FFDBAC';
-    const shirtColor = '#FF6B6B';
-    const pantsColor = '#4ECDC4';
-    const hairColor = '#8B4513';
     const shadowColor = 'rgba(0,0,0,0.3)';
 
     // Draw shadow
@@ -163,7 +165,7 @@ class Player {
 
     // Character sprite data (8x8 pixels)
     const spriteData = this.getCharacterSprite(direction, frame);
-    
+
     // Draw the character pixel by pixel
     for (let row = 0; row < 8; row++) {
       for (let col = 0; col < 8; col++) {
@@ -202,13 +204,59 @@ class Player {
   }
 
   private getPixelColor(pixelType: number): string {
+    const character = this.playerCharacter.selectedCharacter;
     switch (pixelType) {
-      case 1: return '#8B4513'; // Hair (brown)
-      case 2: return '#FFDBAC'; // Skin
-      case 3: return '#FF6B6B'; // Shirt (red)
-      case 4: return '#4ECDC4'; // Pants (teal)
+      case 1: return character.hairColor;
+      case 2: return character.skinColor;
+      case 3: return character.shirtColor;
+      case 4: return character.pantsColor;
       default: return 'transparent';
     }
+  }
+
+  private renderPlayerName(ctx: CanvasRenderingContext2D, playerX: number, playerY: number): void {
+    const name = this.playerCharacter.playerName;
+    if (!name) return;
+
+    // Name settings - position below player
+    const nameY = playerY + this.height + 15; // Position below player
+    const nameX = playerX + this.width / 2;
+
+    ctx.save();
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Measure text for background
+    const textWidth = ctx.measureText(name).width;
+    const padding = 4;
+    const backgroundWidth = textWidth + padding * 2;
+    const backgroundHeight = 12;
+
+    // Draw background
+    ctx.fillStyle = '#861F41';
+    ctx.fillRect(
+      nameX - backgroundWidth / 2,
+      nameY - backgroundHeight / 2,
+      backgroundWidth,
+      backgroundHeight
+    );
+
+    // Draw border
+    ctx.strokeStyle = '#E5751F';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      nameX - backgroundWidth / 2,
+      nameY - backgroundHeight / 2,
+      backgroundWidth,
+      backgroundHeight
+    );
+
+    // Draw text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(name, nameX, nameY);
+
+    ctx.restore();
   }
 
   private setupChatEventListeners(): void {
