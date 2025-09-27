@@ -1,13 +1,6 @@
 import BaseArea from '../BaseArea';
 import { SceneType } from '../types';
 
-interface CampusTile {
-  type: 'grass' | 'stone' | 'water' | 'tree' | 'sand' | 'flower' | 'building' | 'path' | 'bench' | 'fountain' | 'parking' | 'door';
-  solid: boolean;
-  sprite?: number[][];
-  buildingType?: 'newman' | 'burruss' | 'owens' | 'squires' | 'torgersen' | 'war_memorial' | 'drillfield' | 'cassell' | 'lane_stadium';
-}
-
 class CampusArea extends BaseArea {
   public type: SceneType = 'campus';
 
@@ -15,8 +8,8 @@ class CampusArea extends BaseArea {
     return 'Virginia Tech Campus';
   }
 
-  protected generateArea(): CampusTile[][] {
-    const area: CampusTile[][] = [];
+  protected generateArea(): any[][] {
+    const area: any[][] = [];
     
     // Initialize with grass
     for (let y = 0; y < this.areaHeight; y++) {
@@ -34,15 +27,15 @@ class CampusArea extends BaseArea {
     return area;
   }
 
-  private generateCampusBuildings(world: CampusTile[][]): void {
+  private generateCampusBuildings(world: any[][]): void {
     // Burruss Hall (iconic admin building with clock tower)
     this.createBuilding(world, 10, 2, 5, 4, 'burruss');
     
     // Newman Library
     this.createBuilding(world, 3, 2, 5, 4, 'newman');
     
-    // Torgersen Hall (Engineering)
-    this.createBuilding(world, 16, 2, 6, 4, 'torgersen');
+    // Torgersen Hall (Engineering) - Large Gothic Revival building with bridge
+    this.createTorgersenHall(world, 16, 1, 8, 5);
     
     // War Memorial Chapel
     this.createBuilding(world, 5, 8, 3, 3, 'war_memorial');
@@ -60,7 +53,7 @@ class CampusArea extends BaseArea {
     this.createDrillfield(world, 8, 14, 8, 4);
   }
 
-  private createBuilding(world: CampusTile[][], x: number, y: number, width: number, height: number, buildingType: CampusTile['buildingType']): void {
+  private createBuilding(world: any[][], x: number, y: number, width: number, height: number, buildingType: string): void {
     for (let by = y; by < y + height; by++) {
       for (let bx = x; bx < x + width; bx++) {
         if (bx < this.areaWidth && by < this.areaHeight) {
@@ -75,7 +68,53 @@ class CampusArea extends BaseArea {
     }
   }
 
-  private createDrillfield(world: CampusTile[][], x: number, y: number, width: number, height: number): void {
+  private createTorgersenHall(world: any[][], x: number, y: number, width: number, height: number): void {
+    // Create the main Gothic Revival structure with distinctive features
+    // Left wing: 3 tiles wide, 5 tiles tall
+    // Right wing: 3 tiles wide, 5 tiles tall
+    // Bridge: connects the wings at the top
+    
+    for (let by = y; by < y + height; by++) {
+      for (let bx = x; bx < x + width; bx++) {
+        if (bx < this.areaWidth && by < this.areaHeight) {
+          // Left wing of the building (3x5)
+          if (bx >= x && bx <= x + 2 && by >= y && by <= y + height - 1) {
+            if (by === y + height - 1 && bx === x + 1) {
+              world[by][bx] = { type: 'door', solid: false, buildingType: 'torgersen' };
+            } else {
+              world[by][bx] = { type: 'building', solid: true, buildingType: 'torgersen' };
+            }
+          }
+          // Right wing of the building (3x5)
+          else if (bx >= x + width - 3 && bx <= x + width - 1 && by >= y && by <= y + height - 1) {
+            if (by === y + height - 1 && bx === x + width - 2) {
+              world[by][bx] = { type: 'door', solid: false, buildingType: 'torgersen' };
+            } else {
+              world[by][bx] = { type: 'building', solid: true, buildingType: 'torgersen' };
+            }
+          }
+          // Bridge connection (arched walkway between wings) - 6 tiles wide, 2 tiles tall (twice as long)
+          else if (by >= y + 1 && by <= y + 2 && bx >= x + 1 && bx <= x + 6) {
+            world[by][bx] = { type: 'building', solid: true, buildingType: 'torgersen' };
+          }
+          // Central courtyard area under the bridge and open spaces
+          else if (by >= y + 3 && by <= y + height - 1 && bx >= x + 3 && bx <= x + width - 4) {
+            world[by][bx] = { type: 'grass', solid: false };
+          }
+          // Open area above bridge (1st row between wings)
+          else if (by === y && bx >= x + 3 && bx <= x + width - 4) {
+            world[by][bx] = { type: 'grass', solid: false };
+          }
+          // Main entrance under the bridge
+          else if (by === y + height - 1 && bx === x + Math.floor(width / 2)) {
+            world[by][bx] = { type: 'door', solid: false, buildingType: 'torgersen' };
+          }
+        }
+      }
+    }
+  }
+
+  private createDrillfield(world: any[][], x: number, y: number, width: number, height: number): void {
     for (let dy = y; dy < y + height && dy < this.areaHeight; dy++) {
       for (let dx = x; dx < x + width && dx < this.areaWidth; dx++) {
         world[dy][dx] = { type: 'grass', solid: false, buildingType: 'drillfield' };
@@ -83,7 +122,7 @@ class CampusArea extends BaseArea {
     }
   }
 
-  private generateCampusPaths(world: CampusTile[][]): void {
+  private generateCampusPaths(world: any[][]): void {
     // Main campus walkway (horizontal)
     for (let x = 0; x < this.areaWidth; x++) {
       if (world[9][x].type === 'grass') {
@@ -114,7 +153,7 @@ class CampusArea extends BaseArea {
     this.createPathToDoor(world, 19, 9, 'vertical'); // To classroom
   }
 
-  private createPathToDoor(world: CampusTile[][], startX: number, startY: number, direction: 'horizontal' | 'vertical'): void {
+  private createPathToDoor(world: any[][], startX: number, startY: number, direction: 'horizontal' | 'vertical'): void {
     if (direction === 'horizontal') {
       for (let x = startX; x < startX + 3; x++) {
         if (x < this.areaWidth && world[startY][x].type === 'grass') {
@@ -130,7 +169,7 @@ class CampusArea extends BaseArea {
     }
   }
 
-  private generateCampusFeatures(world: CampusTile[][]): void {
+  private generateCampusFeatures(world: any[][]): void {
     // Add trees around campus
     this.addTrees(world, 10, 12, 2); // Near center
     this.addTrees(world, 1, 15, 3); // Near cafeteria
@@ -154,7 +193,7 @@ class CampusArea extends BaseArea {
     this.addFlowersAroundBuilding(world, 9, 2, 4, 3); // Around admin
   }
 
-  private addTrees(world: CampusTile[][], centerX: number, centerY: number, count: number): void {
+  private addTrees(world: any[][], centerX: number, centerY: number, count: number): void {
     for (let i = 0; i < count; i++) {
       const x = centerX + (Math.random() - 0.5) * 4;
       const y = centerY + (Math.random() - 0.5) * 4;
@@ -168,14 +207,14 @@ class CampusArea extends BaseArea {
     }
   }
 
-  private addBench(world: CampusTile[][], x: number, y: number): void {
+  private addBench(world: any[][], x: number, y: number): void {
     if (x >= 0 && x < this.areaWidth && y >= 0 && y < this.areaHeight &&
         world[y][x].type === 'grass') {
       world[y][x] = { type: 'bench', solid: true };
     }
   }
 
-  private createParkingLot(world: CampusTile[][], x: number, y: number, width: number, height: number): void {
+  private createParkingLot(world: any[][], x: number, y: number, width: number, height: number): void {
     for (let py = y; py < y + height; py++) {
       for (let px = x; px < x + width; px++) {
         if (px < this.areaWidth && py < this.areaHeight && world[py][px].type === 'grass') {
@@ -185,7 +224,7 @@ class CampusArea extends BaseArea {
     }
   }
 
-  private addFlowersAroundBuilding(world: CampusTile[][], x: number, y: number, width: number, height: number): void {
+  private addFlowersAroundBuilding(world: any[][], x: number, y: number, width: number, height: number): void {
     // Add flowers around the perimeter of buildings
     for (let fx = x - 1; fx <= x + width; fx++) {
       for (let fy = y - 1; fy <= y + height; fy++) {
@@ -236,26 +275,84 @@ class CampusArea extends BaseArea {
         accentColor = '#FF8C00';
         break;
       case 'torgersen':
-        baseColor = '#B8A082';
-        accentColor = '#4A4A4A';
+        baseColor = '#E8DCC6'; // Light limestone color matching the image
+        accentColor = '#D4C4A8';
         break;
       default:
         baseColor = '#C4A484';
         accentColor = '#8B0000';
     }
     
-    // Main building structure
+    // Specialized rendering for Torgersen Hall
+    if (buildingType === 'torgersen') {
+      this.renderTorgersenTile(ctx, x, y, baseColor, accentColor);
+    } else {
+      // Main building structure for other buildings
+      ctx.fillStyle = baseColor;
+      ctx.fillRect(x, y, this.tileSize, this.tileSize);
+      
+      // Stone texture
+      ctx.fillStyle = '#9A8870';
+      ctx.fillRect(x, y + 8, this.tileSize, 2);
+      ctx.fillRect(x + 8, y, 2, this.tileSize);
+      
+      // VT color accents
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(x + 1, y + 1, this.tileSize - 2, 3);
+    }
+  }
+
+  private renderTorgersenTile(ctx: CanvasRenderingContext2D, x: number, y: number, baseColor: string, accentColor: string): void {
+    // Main limestone structure
     ctx.fillStyle = baseColor;
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
-    // Stone texture
-    ctx.fillStyle = '#9A8870';
-    ctx.fillRect(x, y + 8, this.tileSize, 2);
-    ctx.fillRect(x + 8, y, 2, this.tileSize);
+    // Gothic stone block pattern
+    ctx.fillStyle = '#F5F0E8'; // Lighter limestone highlight
+    ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     
-    // VT color accents
-    ctx.fillStyle = accentColor;
-    ctx.fillRect(x + 1, y + 1, this.tileSize - 2, 3);
+    // Stone block outlines (creating the ashlar masonry pattern)
+    ctx.strokeStyle = '#C8B99C'; // Darker mortar lines
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, this.tileSize, this.tileSize);
+    
+    // Horizontal mortar lines to simulate stone courses
+    ctx.beginPath();
+    ctx.moveTo(x, y + this.tileSize / 2);
+    ctx.lineTo(x + this.tileSize, y + this.tileSize / 2);
+    ctx.stroke();
+    
+    // Vertical joints (offset pattern)
+    const offset = Math.floor((x + y) / this.tileSize) % 2;
+    ctx.beginPath();
+    ctx.moveTo(x + this.tileSize / 2 + (offset * this.tileSize / 4), y);
+    ctx.lineTo(x + this.tileSize / 2 + (offset * this.tileSize / 4), y + this.tileSize);
+    ctx.stroke();
+    
+    // Gothic architectural details - arched window patterns for some tiles
+    if ((x + y) % (this.tileSize * 3) === 0) {
+      // Create Gothic arch pattern
+      ctx.fillStyle = '#4A4A4A';
+      ctx.beginPath();
+      ctx.arc(x + this.tileSize / 2, y + this.tileSize - 4, 6, Math.PI, 0);
+      ctx.fill();
+      
+      // Window glass
+      ctx.fillStyle = '#87CEEB';
+      ctx.beginPath();
+      ctx.arc(x + this.tileSize / 2, y + this.tileSize - 4, 4, Math.PI, 0);
+      ctx.fill();
+    }
+    
+    // Stone weathering and texture details
+    ctx.fillStyle = '#DDD4C0';
+    ctx.fillRect(x + 1, y + 1, 2, this.tileSize - 2);
+    ctx.fillRect(x + this.tileSize - 3, y + 1, 2, this.tileSize - 2);
+    
+    // Subtle shadow to give depth
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(x + this.tileSize - 2, y, 2, this.tileSize);
+    ctx.fillRect(x, y + this.tileSize - 2, this.tileSize, 2);
   }
 }
 

@@ -2,10 +2,11 @@ import Player from './Player';
 import { Scene, SceneType } from './types';
 
 interface AreaTile {
-  type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'grass' | 'road' | 'sidewalk' | 'building' | 'parking';
+  type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'stone' | 'water' | 'tree' | 'sand' | 'flower' | 'path' | 'bench' | 'fountain';
   solid: boolean;
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
   buildingType?: string;
+  sprite?: number[][];
 }
 
 abstract class BaseArea implements Scene {
@@ -129,6 +130,30 @@ abstract class BaseArea implements Scene {
       case 'furniture':
         this.renderFurnitureTile(ctx, tile, x, y);
         break;
+      case 'tree':
+        this.renderTreeTile(ctx, x, y);
+        break;
+      case 'path':
+        this.renderPathTile(ctx, x, y);
+        break;
+      case 'bench':
+        this.renderBenchTile(ctx, x, y);
+        break;
+      case 'fountain':
+        this.renderFountainTile(ctx, x, y);
+        break;
+      case 'flower':
+        this.renderFlowerTile(ctx, x, y);
+        break;
+      case 'stone':
+        this.renderStoneTile(ctx, x, y);
+        break;
+      case 'water':
+        this.renderWaterTile(ctx, x, y);
+        break;
+      case 'sand':
+        this.renderSandTile(ctx, x, y);
+        break;
     }
   }
 
@@ -198,6 +223,89 @@ abstract class BaseArea implements Scene {
     // Base furniture rendering
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(x + 4, y + 4, this.tileSize - 8, this.tileSize - 8);
+  }
+
+  protected renderTreeTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Tree trunk
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x + 12, y + 20, 8, 12);
+    // Tree foliage
+    ctx.fillStyle = '#228B22';
+    ctx.beginPath();
+    ctx.arc(x + 16, y + 16, 12, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  protected renderPathTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    ctx.fillStyle = '#D2B48C';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Path texture
+    ctx.fillStyle = '#DEB887';
+    ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+  }
+
+  protected renderBenchTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Bench base
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x + 4, y + 16, 24, 8);
+    // Bench back
+    ctx.fillRect(x + 4, y + 8, 4, 16);
+    ctx.fillRect(x + 24, y + 8, 4, 16);
+  }
+
+  protected renderFountainTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Fountain base
+    ctx.fillStyle = '#D3D3D3';
+    ctx.beginPath();
+    ctx.arc(x + 16, y + 16, 14, 0, 2 * Math.PI);
+    ctx.fill();
+    // Water
+    ctx.fillStyle = '#4169E1';
+    ctx.beginPath();
+    ctx.arc(x + 16, y + 16, 10, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  protected renderFlowerTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Grass base
+    this.renderGrassTile(ctx, x, y);
+    // Flowers
+    ctx.fillStyle = '#FF69B4';
+    ctx.beginPath();
+    ctx.arc(x + 8, y + 8, 3, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(x + 20, y + 20, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  protected renderStoneTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    ctx.fillStyle = '#708090';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Stone texture
+    ctx.fillStyle = '#778899';
+    ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+  }
+
+  protected renderWaterTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    ctx.fillStyle = '#4169E1';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Water ripples
+    ctx.fillStyle = '#6495ED';
+    ctx.fillRect(x + 4, y + 4, this.tileSize - 8, this.tileSize - 8);
+  }
+
+  protected renderSandTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    ctx.fillStyle = '#F4A460';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Sand texture
+    ctx.fillStyle = '#DEB887';
+    for (let i = 0; i < 6; i++) {
+      const px = x + Math.floor(Math.random() * this.tileSize);
+      const py = y + Math.floor(Math.random() * this.tileSize);
+      ctx.fillRect(px, py, 1, 1);
+    }
   }
 
   public getEntrancePosition(): { x: number, y: number } {

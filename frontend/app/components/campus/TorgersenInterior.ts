@@ -5,7 +5,7 @@ class TorgersenInterior extends BaseBuildingInterior {
   public type: SceneType = 'torgersen';
 
   protected getBuildingName(): string {
-    return 'Torgersen Hall - Engineering';
+    return 'Torgersen Hall - College of Engineering';
   }
 
   protected generateInterior(): any[][] {
@@ -56,64 +56,130 @@ class TorgersenInterior extends BaseBuildingInterior {
   }
 
   protected renderBuildingSpecificElements(ctx: CanvasRenderingContext2D): void {
-    // Torgersen Hall Engineering specific elements
+    // Torgersen Hall Gothic Revival Architecture and Engineering Elements
     
-    // Engineering lab equipment
+    // Gothic architectural details on walls
+    this.renderGothicArchDetails(ctx);
+    
+    // Engineering lab equipment with more modern appearance
     ctx.fillStyle = '#4A4A4A'; // Gray metal
     ctx.fillRect(400 - this.cameraX, 250 - this.cameraY, 80, 40);
     ctx.fillRect(500 - this.cameraX, 250 - this.cameraY, 80, 40);
     
-    // Oscilloscope screens
-    ctx.fillStyle = '#00FF00'; // Green screen
-    ctx.fillRect(410 - this.cameraX, 260 - this.cameraY, 25, 20);
-    ctx.fillRect(510 - this.cameraX, 260 - this.cameraY, 25, 20);
+    // Modern LCD screens
+    ctx.fillStyle = '#1E1E1E'; // Dark screen bezel
+    ctx.fillRect(405 - this.cameraX, 255 - this.cameraY, 30, 20);
+    ctx.fillRect(505 - this.cameraX, 255 - this.cameraY, 30, 20);
+    ctx.fillStyle = '#0066FF'; // Blue LCD screen
+    ctx.fillRect(407 - this.cameraX, 257 - this.cameraY, 26, 16);
+    ctx.fillRect(507 - this.cameraX, 257 - this.cameraY, 26, 16);
     
-    // Building name and department
-    ctx.fillStyle = '#4A4A4A';
-    ctx.font = 'bold 16px monospace';
+    // Building name with Gothic-inspired font styling
+    ctx.fillStyle = '#8B0000'; // VT Maroon
+    ctx.font = 'bold 18px serif';
     ctx.textAlign = 'center';
     ctx.fillText('TORGERSEN HALL', 400 - this.cameraX, 30 - this.cameraY);
-    ctx.fillStyle = '#FF8C00';
-    ctx.font = 'bold 12px monospace';
+    ctx.fillStyle = '#FF8C00'; // VT Orange
+    ctx.font = 'bold 14px serif';
     ctx.fillText('COLLEGE OF ENGINEERING', 400 - this.cameraX, 50 - this.cameraY);
+    ctx.fillStyle = '#C8B99C';
+    ctx.font = '10px serif';
+    ctx.fillText('EST. 1872 • VIRGINIA TECH', 400 - this.cameraX, 65 - this.cameraY);
     
-    // Lab signs
-    ctx.fillStyle = '#4A4A4A';
-    ctx.font = '12px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText('Computer Lab', 80 - this.cameraX, 100 - this.cameraY);
-    ctx.fillText('Electronics Lab', 400 - this.cameraX, 200 - this.cameraY);
-    ctx.fillText('Design Studio', 400 - this.cameraX, 300 - this.cameraY);
-    
-    // Circuit diagrams on walls (decorative)
-    ctx.strokeStyle = '#4A4A4A';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    // Simple circuit diagram
-    ctx.moveTo(50 - this.cameraX, 150 - this.cameraY);
-    ctx.lineTo(150 - this.cameraX, 150 - this.cameraY);
-    ctx.moveTo(100 - this.cameraX, 130 - this.cameraY);
-    ctx.lineTo(100 - this.cameraX, 170 - this.cameraY);
-    ctx.stroke();
-    
-    // Resistor symbol
-    ctx.beginPath();
-    ctx.rect(90 - this.cameraX, 145 - this.cameraY, 20, 10);
-    ctx.stroke();
-    
-    // VT Engineering logo area
-    ctx.fillStyle = '#8B0000';
-    ctx.fillRect(350 - this.cameraX, 80 - this.cameraY, 100, 40);
-    ctx.fillStyle = '#FF8C00';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('VT', 380 - this.cameraX, 95 - this.cameraY);
-    ctx.fillText('ENGINEERING', 400 - this.cameraX, 110 - this.cameraY);
-    
-    // Floor cable management (engineering building detail)
+    // Elegant departmental signs with Gothic styling
     ctx.fillStyle = '#2F2F2F';
-    ctx.fillRect(0 - this.cameraX, 200 - this.cameraY, 800, 4);
-    ctx.fillRect(0 - this.cameraX, 300 - this.cameraY, 800, 4);
+    ctx.font = '14px serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡ Electrical & Computer Engineering', 80 - this.cameraX, 100 - this.cameraY);
+    ctx.fillText('🔧 Mechanical Engineering Lab', 400 - this.cameraX, 200 - this.cameraY);
+    ctx.fillText('💻 Engineering Design Studio', 400 - this.cameraX, 320 - this.cameraY);
+    
+    // Gothic stone columns (decorative)
+    this.renderGothicColumns(ctx);
+    
+    // Advanced engineering elements
+    ctx.strokeStyle = '#4A4A4A';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    // CAD workstation diagrams
+    ctx.moveTo(50 - this.cameraX, 140 - this.cameraY);
+    ctx.lineTo(150 - this.cameraX, 140 - this.cameraY);
+    ctx.lineTo(150 - this.cameraX, 180 - this.cameraY);
+    ctx.lineTo(50 - this.cameraX, 180 - this.cameraY);
+    ctx.closePath();
+    ctx.stroke();
+    
+    // VT Engineering logo with Gothic styling
+    ctx.fillStyle = '#8B0000';
+    ctx.fillRect(350 - this.cameraX, 75 - this.cameraY, 120, 50);
+    ctx.fillStyle = '#E8DCC6'; // Limestone color
+    ctx.fillRect(352 - this.cameraX, 77 - this.cameraY, 116, 46);
+    ctx.fillStyle = '#8B0000';
+    ctx.font = 'bold 16px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('VT', 410 - this.cameraX, 95 - this.cameraY);
+    ctx.font = 'bold 10px serif';
+    ctx.fillText('ENGINEERING', 410 - this.cameraX, 110 - this.cameraY);
+    ctx.fillText('EXCELLENCE', 410 - this.cameraX, 120 - this.cameraY);
+    
+    // Modern cable management with Gothic aesthetic
+    ctx.fillStyle = '#2F2F2F';
+    ctx.fillRect(0 - this.cameraX, 200 - this.cameraY, 800, 3);
+    ctx.fillRect(0 - this.cameraX, 300 - this.cameraY, 800, 3);
+    
+    // Stone floor pattern details
+    ctx.strokeStyle = '#C8B99C';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < 800; x += 64) {
+      ctx.beginPath();
+      ctx.moveTo(x - this.cameraX, 0 - this.cameraY);
+      ctx.lineTo(x - this.cameraX, 600 - this.cameraY);
+      ctx.stroke();
+    }
+  }
+
+  private renderGothicArchDetails(ctx: CanvasRenderingContext2D): void {
+    // Gothic arch patterns on walls
+    ctx.strokeStyle = '#C8B99C';
+    ctx.lineWidth = 2;
+    
+    // Left wall arches
+    for (let i = 0; i < 3; i++) {
+      const x = 20 + i * 60;
+      const y = 120;
+      ctx.beginPath();
+      ctx.arc(x - this.cameraX, y - this.cameraY, 25, Math.PI, 0);
+      ctx.stroke();
+    }
+    
+    // Right wall arches
+    for (let i = 0; i < 3; i++) {
+      const x = 600 + i * 60;
+      const y = 120;
+      ctx.beginPath();
+      ctx.arc(x - this.cameraX, y - this.cameraY, 25, Math.PI, 0);
+      ctx.stroke();
+    }
+  }
+
+  private renderGothicColumns(ctx: CanvasRenderingContext2D): void {
+    // Gothic stone columns
+    ctx.fillStyle = '#E8DCC6'; // Limestone
+    
+    // Left columns
+    ctx.fillRect(30 - this.cameraX, 50 - this.cameraY, 12, 400);
+    ctx.fillRect(120 - this.cameraX, 50 - this.cameraY, 12, 400);
+    
+    // Right columns  
+    ctx.fillRect(650 - this.cameraX, 50 - this.cameraY, 12, 400);
+    ctx.fillRect(740 - this.cameraX, 50 - this.cameraY, 12, 400);
+    
+    // Column capitals (decorative tops)
+    ctx.fillStyle = '#D4C4A8';
+    ctx.fillRect(25 - this.cameraX, 45 - this.cameraY, 22, 10);
+    ctx.fillRect(115 - this.cameraX, 45 - this.cameraY, 22, 10);
+    ctx.fillRect(645 - this.cameraX, 45 - this.cameraY, 22, 10);
+    ctx.fillRect(735 - this.cameraX, 45 - this.cameraY, 22, 10);
   }
 }
 
