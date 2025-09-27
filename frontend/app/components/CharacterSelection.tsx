@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CHARACTER_OPTIONS, CharacterOption, PlayerCharacter } from './CharacterData';
+import { CHARACTER_OPTIONS, CharacterOption, PlayerCharacter, GENDER_OPTIONS, GenderOption } from './CharacterData';
 
 interface CharacterSelectionProps {
   onCharacterSelected: (character: PlayerCharacter) => void;
@@ -11,14 +11,52 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [playerName, setPlayerName] = useState<string>('');
   const [isEnteringName, setIsEnteringName] = useState<boolean>(false);
+  const [selectedGender, setSelectedGender] = useState<GenderOption | null>(null);
+  const [selectedGenderIndex, setSelectedGenderIndex] = useState<number>(0);
+  const [customPronouns, setCustomPronouns] = useState<string>('');
+  const [isEnteringCustomPronouns, setIsEnteringCustomPronouns] = useState<boolean>(false);
+  const [isSelectingGender, setIsSelectingGender] = useState<boolean>(false);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (isEnteringName) {
+      if (isEnteringCustomPronouns) {
+        if (e.key === 'Enter') {
+          setIsEnteringCustomPronouns(false);
+          setIsEnteringName(true);
+        } else if (e.key === 'Escape') {
+          setIsEnteringCustomPronouns(false);
+          setCustomPronouns('');
+          setIsSelectingGender(true);
+        } else if (e.key === 'Backspace') {
+          setCustomPronouns(prev => prev.slice(0, -1));
+        } else if (e.key.length === 1 && customPronouns.length < 15) {
+          setCustomPronouns(prev => prev + e.key);
+        }
+      } else if (isSelectingGender) {
+        if (e.key === 'ArrowUp' || e.key === 'KeyW') {
+          setSelectedGenderIndex(prev => (prev - 1 + GENDER_OPTIONS.length) % GENDER_OPTIONS.length);
+        } else if (e.key === 'ArrowDown' || e.key === 'KeyS') {
+          setSelectedGenderIndex(prev => (prev + 1) % GENDER_OPTIONS.length);
+        } else if (e.key === 'Enter') {
+          const selected = GENDER_OPTIONS[selectedGenderIndex];
+          setSelectedGender(selected);
+          if (selected.id === 'custom') {
+            setIsSelectingGender(false);
+            setIsEnteringCustomPronouns(true);
+          } else {
+            setIsSelectingGender(false);
+            setIsEnteringName(true);
+          }
+        } else if (e.key === 'Escape') {
+          setIsSelectingGender(false);
+          setIsEnteringName(true);
+        }
+      } else if (isEnteringName) {
         if (e.key === 'Enter') {
           handleStartGame();
         } else if (e.key === 'Escape') {
           setIsEnteringName(false);
+          setIsSelectingGender(true);
         } else if (e.key === 'Backspace') {
           setPlayerName(prev => prev.slice(0, -1));
         } else if (e.key.length === 1 && playerName.length < 20) {
@@ -34,24 +72,29 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
         } else if (e.key === 'ArrowUp' || e.key === 'KeyW') {
           setSelectedIndex(prev => (prev - 4 + CHARACTER_OPTIONS.length) % CHARACTER_OPTIONS.length);
         } else if (e.key === 'Enter') {
-          setIsEnteringName(true);
+          setIsSelectingGender(true);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isEnteringName, playerName]);
+  }, [isEnteringName, playerName, isEnteringCustomPronouns, customPronouns, isSelectingGender, selectedGenderIndex, selectedGender]);
 
   const handleStartGame = () => {
     if (playerName.trim().length < 2) {
       return;
     }
 
-    onCharacterSelected({
+    const characterData = {
       selectedCharacter: CHARACTER_OPTIONS[selectedIndex],
-      playerName: playerName.trim()
-    });
+      playerName: playerName.trim(),
+      selectedGender: selectedGender,
+      customPronouns: selectedGender?.id === 'custom' ? customPronouns : undefined,
+      showPronouns: selectedGender ? selectedGender.id !== 'prefer-not' : false
+    };
+
+    onCharacterSelected(characterData);
   };
 
   const renderCharacterPreview = (character: CharacterOption, scale: number = 6) => {
@@ -117,6 +160,70 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
     }
   };
 
+  if (isEnteringCustomPronouns) {
+    return (
+      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-8 text-orange-400">ENTER CUSTOM PRONOUNS</h1>
+          <div className="mb-8">
+            {renderCharacterPreview(CHARACTER_OPTIONS[selectedIndex], 8)}
+          </div>
+          <div className="text-2xl mb-4">
+            <span className="text-gray-400">Pronouns: </span>
+            <span className="text-white">{customPronouns}</span>
+            <span className="animate-pulse">|</span>
+          </div>
+          <div className="text-gray-400 text-sm">
+            <p>Enter your pronouns (e.g., xe/xir, ze/zir)</p>
+            <p>Press ENTER to continue or ESCAPE to go back</p>
+            <p>Maximum 15 characters</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSelectingGender) {
+    return (
+      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-8 text-orange-400">CHOOSE GENDER (OPTIONAL)</h1>
+          <div className="mb-8">
+            {renderCharacterPreview(CHARACTER_OPTIONS[selectedIndex], 8)}
+          </div>
+
+          <div className="mb-6">
+            <div className="grid grid-cols-1 gap-3 max-w-md mx-auto mb-6">
+              {GENDER_OPTIONS.map((gender, index) => (
+                <div
+                  key={gender.id}
+                  className={`p-3 border-2 rounded-lg transition-all text-left ${
+                    selectedGenderIndex === index
+                      ? 'border-orange-400 bg-orange-900 bg-opacity-20'
+                      : 'border-gray-600'
+                  }`}
+                >
+                  <div className="text-lg font-bold text-orange-300">{gender.name}</div>
+                  {gender.pronouns && (
+                    <div className="text-sm text-gray-400">{gender.pronouns}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          <div className="text-gray-400 text-sm">
+            <p>Use ARROW KEYS or WS to select</p>
+            <p>Press ENTER to confirm selection</p>
+            <p>Press ESCAPE to skip gender selection</p>
+            <p className="text-orange-300 mt-2">Pronouns will be shown automatically (except "Prefer not to specify")</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isEnteringName) {
     return (
       <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center">
@@ -125,6 +232,28 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
           <div className="mb-8">
             {renderCharacterPreview(CHARACTER_OPTIONS[selectedIndex], 8)}
           </div>
+
+          {selectedGender && (
+            <div className="mb-4">
+              <span className="text-gray-400">Gender: </span>
+              <span className="text-orange-300">{selectedGender.name}</span>
+              {selectedGender.id === 'custom' && customPronouns && (
+                <>
+                  <span className="text-gray-400"> (</span>
+                  <span className="text-orange-300">{customPronouns}</span>
+                  <span className="text-gray-400">)</span>
+                </>
+              )}
+              {selectedGender.pronouns && selectedGender.id !== 'custom' && (
+                <>
+                  <span className="text-gray-400"> (</span>
+                  <span className="text-orange-300">{selectedGender.pronouns}</span>
+                  <span className="text-gray-400">)</span>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="text-2xl mb-4">
             <span className="text-gray-400">Name: </span>
             <span className="text-white">{playerName}</span>
@@ -175,7 +304,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
 
         <div className="text-gray-400 text-sm">
           <p>Use ARROW KEYS or WASD to select a character</p>
-          <p>Press ENTER to continue to name entry</p>
+          <p>Press ENTER to continue to gender selection</p>
         </div>
       </div>
     </div>

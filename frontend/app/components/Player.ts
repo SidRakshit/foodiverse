@@ -218,6 +218,16 @@ class Player {
     const name = this.playerCharacter.playerName;
     if (!name) return;
 
+    // Determine pronouns to display
+    let pronounsText = '';
+    if (this.playerCharacter.showPronouns && this.playerCharacter.selectedGender) {
+      if (this.playerCharacter.selectedGender.id === 'custom' && this.playerCharacter.customPronouns) {
+        pronounsText = this.playerCharacter.customPronouns;
+      } else if (this.playerCharacter.selectedGender.pronouns) {
+        pronounsText = this.playerCharacter.selectedGender.pronouns;
+      }
+    }
+
     // Name settings - position below player
     const nameY = playerY + this.height + 15; // Position below player
     const nameX = playerX + this.width / 2;
@@ -227,11 +237,14 @@ class Player {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Measure text for background
-    const textWidth = ctx.measureText(name).width;
+    // Calculate dimensions for both name and pronouns
+    const nameWidth = ctx.measureText(name).width;
+    const pronounsWidth = pronounsText ? ctx.measureText(`(${pronounsText})`).width : 0;
+    const maxWidth = Math.max(nameWidth, pronounsWidth);
+
     const padding = 4;
-    const backgroundWidth = textWidth + padding * 2;
-    const backgroundHeight = 12;
+    const backgroundWidth = maxWidth + padding * 2;
+    const backgroundHeight = pronounsText ? 22 : 12; // Taller if pronouns present
 
     // Draw background
     ctx.fillStyle = '#861F41';
@@ -252,9 +265,16 @@ class Player {
       backgroundHeight
     );
 
-    // Draw text
+    // Draw name text
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(name, nameX, nameY);
+    const nameYPos = pronounsText ? nameY - 5 : nameY; // Move up if pronouns present
+    ctx.fillText(name, nameX, nameYPos);
+
+    // Draw pronouns text below name if present
+    if (pronounsText) {
+      ctx.fillStyle = '#CCCCCC'; // Slightly dimmer color for pronouns
+      ctx.fillText(`(${pronounsText})`, nameX, nameY + 5);
+    }
 
     ctx.restore();
   }

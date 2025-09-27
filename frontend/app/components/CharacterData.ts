@@ -74,7 +74,25 @@ export const CHARACTER_OPTIONS: CharacterOption[] = [
   }
 ];
 
+export interface GenderOption {
+  id: string;
+  name: string;
+  pronouns: string;
+  allowCustom?: boolean;
+}
+
+export const GENDER_OPTIONS: GenderOption[] = [
+  { id: 'he', name: 'He/Him', pronouns: 'he/him' },
+  { id: 'she', name: 'She/Her', pronouns: 'she/her' },
+  { id: 'they', name: 'They/Them', pronouns: 'they/them' },
+  { id: 'custom', name: 'Custom', pronouns: '', allowCustom: true },
+  { id: 'prefer-not', name: 'Prefer not to specify', pronouns: '' }
+];
+
 export interface PlayerCharacter {
   selectedCharacter: CharacterOption;
   playerName: string;
+  selectedGender?: GenderOption;
+  customPronouns?: string;
+  showPronouns: boolean;
 }
