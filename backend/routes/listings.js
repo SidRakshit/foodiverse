@@ -104,7 +104,7 @@ router.get("/", async (req, res) => {
 });
 
 // Add/Update fridge food item
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const {
       item_name,
@@ -137,8 +137,8 @@ router.post("/", authMiddleware, async (req, res) => {
     `;
     
     const result = await pool.query(q, [
-      req.user.id,
-      parseInt(req.user.building_id) || 1, // Ensure building_id is an integer
+      1, // Default user_id when no auth
+      parseInt(building_number) || 1, // Use building_number as building_id
       item_name,
       photo_url,
       apartment_number,
@@ -151,7 +151,7 @@ router.post("/", authMiddleware, async (req, res) => {
       id: result.rows[0].id.toString(),
       name: result.rows[0].item_name,
       quantity: quantity,
-      addedBy: req.user.name || req.user.email || 'User',
+      addedBy: 'Player',
       dateAdded: new Date(result.rows[0].created_at),
       expirationDate: days_to_expiry ? 
         new Date(Date.now() + (days_to_expiry * 24 * 60 * 60 * 1000)) : 
@@ -173,7 +173,7 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 // Update fridge food item status (for claiming/completing items)
-router.put("/", authMiddleware, async (req, res) => {
+router.put("/", async (req, res) => {
   try {
     const { id, status, apartment_id, building_id, items } = req.body;
     
@@ -235,8 +235,8 @@ router.put("/", authMiddleware, async (req, res) => {
               RETURNING *
             `;
             const result = await client.query(q, [
-              req.user.id,
-              building_id || req.user.building_id,
+              1, // Default user_id
+              building_id || 1,
               item.name,
               apartment_id,
               building_id,
@@ -267,7 +267,7 @@ router.put("/", authMiddleware, async (req, res) => {
   }
 });
 // Delete fridge food item
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -281,10 +281,8 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     
     const item = checkResult.rows[0];
     
-    // Allow deletion if user owns the item or is admin
-    if (item.user_id !== req.user.id && !req.user.isAdmin) {
-      return res.status(403).json({ error: "Not authorized to delete this item" });
-    }
+    // Allow deletion for now (no auth)
+    // In production, you might want to add some basic validation
     
     const deleteQuery = "DELETE FROM listings WHERE id = $1 RETURNING *";
     const result = await pool.query(deleteQuery, [id]);
@@ -297,7 +295,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 });
 
 // Claim item (legacy support)
-router.put("/:id/claim", authMiddleware, async (req, res) => {
+router.put("/:id/claim", async (req, res) => {
   try {
     const { id } = req.params;
     const listing = await pool.query("SELECT * FROM listings WHERE id=$1", [id]);
@@ -316,7 +314,7 @@ router.put("/:id/claim", authMiddleware, async (req, res) => {
 });
 
 // Complete item (legacy support)
-router.put("/:id/complete", authMiddleware, async (req, res) => {
+router.put("/:id/complete", async (req, res) => {
   try {
     const { id } = req.params;
     const listing = await pool.query("SELECT * FROM listings WHERE id=$1", [id]);

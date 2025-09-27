@@ -33,10 +33,16 @@ class FridgeManager {
     isOpen: boolean;
     currentFridge: string | null;
     selectedItemIndex: number;
+    isInputMode: boolean;
+    inputText: string;
+    inputPrompt: string;
   } = {
     isOpen: false,
     currentFridge: null,
-    selectedItemIndex: 0
+    selectedItemIndex: 0,
+    isInputMode: false,
+    inputText: '',
+    inputPrompt: ''
   };
   private isLoading: boolean = false;
   private lastRefresh: Map<string, number> = new Map(); // Track last refresh time per fridge
@@ -52,15 +58,6 @@ class FridgeManager {
 
   constructor() {
     this.initializeDefaultFridges();
-    // Set up a mock auth token for development
-    // In production, this should come from your authentication system
-    this.setupMockAuth();
-  }
-
-  private setupMockAuth(): void {
-    // This is a mock setup - replace with real authentication
-    const mockToken = 'mock-jwt-token-for-development';
-    apiService.setAuthToken(mockToken);
   }
 
   private initializeDefaultFridges(): void {
@@ -177,6 +174,9 @@ class FridgeManager {
     this.uiState.isOpen = false;
     this.uiState.currentFridge = null;
     this.uiState.selectedItemIndex = 0;
+    this.uiState.isInputMode = false;
+    this.uiState.inputText = '';
+    this.uiState.inputPrompt = '';
   }
 
   public isFridgeUIOpen(): boolean {
@@ -349,14 +349,23 @@ class FridgeManager {
       ctx.fillText('🔄 Loading...', uiX + uiWidth - 80, uiY + 75);
     }
     
-    // Items list
-    this.renderItemsList(ctx, items, uiX + 10, uiY + 80, uiWidth - 20, uiHeight - 120);
+    // Items list or input field
+    if (this.uiState.isInputMode) {
+      this.renderInputField(ctx, uiX + 10, uiY + 80, uiWidth - 20, 40);
+      // Show items list below input field
+      this.renderItemsList(ctx, items, uiX + 10, uiY + 130, uiWidth - 20, uiHeight - 170);
+    } else {
+      this.renderItemsList(ctx, items, uiX + 10, uiY + 80, uiWidth - 20, uiHeight - 120);
+    }
     
     // Instructions
     ctx.fillStyle = '#7F8C8D';
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
-    if (canModify) {
+    // Input mode instructions or regular instructions
+    if (this.uiState.isInputMode) {
+      ctx.fillText('Type food item name, press ENTER to add, ESC to cancel', uiX + uiWidth / 2, uiY + uiHeight - 10);
+    } else if (canModify) {
       const instructions = isOnline 
         ? 'Press A to add item, D to delete selected item, C to claim, X to complete, R to refresh, ↑↓ to navigate, ESC to close'
         : 'Press A to add local item, D to delete item, R to retry connection, ↑↓ to navigate, ESC to close';
@@ -369,6 +378,35 @@ class FridgeManager {
     }
     
     ctx.restore();
+  }
+
+  private renderInputField(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number): void {
+    // Input field background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x, y, width, height);
+    
+    // Input field border
+    ctx.strokeStyle = '#3498DB';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+    
+    // Prompt text
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(this.uiState.inputPrompt, x + 10, y - 5);
+    
+    // Input text
+    ctx.fillStyle = '#2C3E50';
+    ctx.font = '16px Arial';
+    const displayText = this.uiState.inputText + '|'; // Add cursor
+    ctx.fillText(displayText, x + 10, y + 25);
+    
+    // Character limit indicator
+    ctx.fillStyle = '#7F8C8D';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${this.uiState.inputText.length}/50`, x + width - 10, y + height - 5);
   }
 
   private renderItemsList(ctx: CanvasRenderingContext2D, items: FridgeItem[], x: number, y: number, width: number, height: number): void {
@@ -543,6 +581,78 @@ class FridgeManager {
     }, playerId);
   }
 
+  // Add custom item with user input
+  public async addCustomItem(fridgeId: string, itemName: string, playerId: string): Promise<boolean> {
+    if (!itemName.trim()) {
+      return false;
+    }
+
+    // Auto-categorize based on common food items
+    const category = this.categorizeFood(itemName.trim());
+    
+    return await this.addItem(fridgeId, {
+      name: itemName.trim(),
+      category: category,
+      quantity: 1,
+      addedBy: playerId,
+      expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days default
+    }, playerId);
+  }
+
+  // Simple food categorization
+  private categorizeFood(itemName: string): 'dairy' | 'meat' | 'vegetables' | 'fruits' | 'leftovers' | 'beverages' | 'condiments' | 'other' {
+    const name = itemName.toLowerCase();
+    
+    // Dairy
+    if (name.includes('milk') || name.includes('cheese') || name.includes('yogurt') || 
+        name.includes('butter') || name.includes('cream') || name.includes('eggs')) {
+      return 'dairy';
+    }
+    
+    // Meat
+    if (name.includes('chicken') || name.includes('beef') || name.includes('pork') || 
+        name.includes('fish') || name.includes('meat') || name.includes('bacon') ||
+        name.includes('ham') || name.includes('turkey')) {
+      return 'meat';
+    }
+    
+    // Vegetables
+    if (name.includes('carrot') || name.includes('lettuce') || name.includes('tomato') ||
+        name.includes('onion') || name.includes('pepper') || name.includes('broccoli') ||
+        name.includes('spinach') || name.includes('potato') || name.includes('celery')) {
+      return 'vegetables';
+    }
+    
+    // Fruits
+    if (name.includes('apple') || name.includes('banana') || name.includes('orange') ||
+        name.includes('grape') || name.includes('berry') || name.includes('fruit') ||
+        name.includes('lemon') || name.includes('lime') || name.includes('peach')) {
+      return 'fruits';
+    }
+    
+    // Beverages
+    if (name.includes('drink') || name.includes('juice') || name.includes('soda') ||
+        name.includes('water') || name.includes('beer') || name.includes('wine') ||
+        name.includes('coffee') || name.includes('tea')) {
+      return 'beverages';
+    }
+    
+    // Condiments
+    if (name.includes('sauce') || name.includes('dressing') || name.includes('mayo') ||
+        name.includes('ketchup') || name.includes('mustard') || name.includes('oil') ||
+        name.includes('vinegar') || name.includes('salt') || name.includes('pepper')) {
+      return 'condiments';
+    }
+    
+    // Leftovers
+    if (name.includes('leftover') || name.includes('pizza') || name.includes('pasta') ||
+        name.includes('rice') || name.includes('soup') || name.includes('sandwich')) {
+      return 'leftovers';
+    }
+    
+    return 'other';
+  }
+
   // Database integration methods
   private async refreshFridgeData(fridgeId: string, force: boolean = false): Promise<void> {
     const now = Date.now();
@@ -697,6 +807,56 @@ class FridgeManager {
   // Get selected item index for external access
   public getSelectedItemIndex(): number {
     return this.uiState.selectedItemIndex;
+  }
+
+  // Input mode management
+  public startInputMode(prompt: string): void {
+    this.uiState.isInputMode = true;
+    this.uiState.inputText = '';
+    this.uiState.inputPrompt = prompt;
+  }
+
+  public cancelInputMode(): void {
+    this.uiState.isInputMode = false;
+    this.uiState.inputText = '';
+    this.uiState.inputPrompt = '';
+  }
+
+  public isInInputMode(): boolean {
+    return this.uiState.isInputMode;
+  }
+
+  public handleInputCharacter(char: string): void {
+    if (this.uiState.isInputMode) {
+      if (char === 'Backspace') {
+        this.uiState.inputText = this.uiState.inputText.slice(0, -1);
+      } else if (char.length === 1) {
+        this.uiState.inputText += char;
+      }
+    }
+  }
+
+  public getInputText(): string {
+    return this.uiState.inputText;
+  }
+
+  public getInputPrompt(): string {
+    return this.uiState.inputPrompt;
+  }
+
+  public async submitInput(playerId: string): Promise<boolean> {
+    if (!this.uiState.isInputMode || !this.uiState.currentFridge) {
+      return false;
+    }
+
+    const success = await this.addCustomItem(
+      this.uiState.currentFridge, 
+      this.uiState.inputText, 
+      playerId
+    );
+
+    this.cancelInputMode();
+    return success;
   }
 }
 

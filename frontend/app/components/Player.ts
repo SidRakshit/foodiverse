@@ -213,8 +213,18 @@ class Player {
 
   private setupChatEventListeners(): void {
     if (typeof window !== 'undefined') {
-      // Listen for the Enter key to start chatting
+      // Listen for keyboard events
       window.addEventListener('keydown', (event: KeyboardEvent) => {
+        const fridgeManager = FridgeManager.getInstance();
+        
+        // Handle fridge input mode first
+        if (fridgeManager.isFridgeUIOpen() && fridgeManager.isInInputMode()) {
+          this.handleFridgeInput(event, fridgeManager);
+          event.preventDefault();
+          return;
+        }
+        
+        // Handle chat input
         if (event.key === 'Enter' && !this.isChatting) {
           this.startChatting();
           event.preventDefault();
@@ -438,6 +448,12 @@ class Player {
   }
 
   private handleFridgeUIInput(inputHandler: InputHandler, fridgeManager: FridgeManager): void {
+    // Check if we're in input mode
+    if (fridgeManager.isInInputMode()) {
+      // Input mode is handled by the global keyboard listener
+      return;
+    }
+
     // Close with ESC - this should have priority over scene transitions
     if (inputHandler.wasKeyJustPressed('Escape')) {
       console.log('🧊 ESC pressed - closing fridge UI');
@@ -489,15 +505,10 @@ class Player {
     }
     
     if (canModify) {
-      // Add item with 'A' key
+      // Add item with 'A' key - now opens input mode
       if (inputHandler.wasKeyJustPressed('KeyA')) {
-        fridgeManager.addRandomItem(currentFridge, this.playerId).then(success => {
-          if (success) {
-            console.log('✅ Item added successfully');
-          } else {
-            console.log('❌ Failed to add item');
-          }
-        });
+        console.log('📝 Starting input mode for adding custom item...');
+        fridgeManager.startInputMode('Enter food item name:');
       }
       
       // Delete selected item with 'D' key
@@ -525,6 +536,29 @@ class Player {
         }).catch(error => {
           console.error('❌ Error during refresh:', error);
         });
+      }
+    }
+  }
+
+  private handleFridgeInput(event: KeyboardEvent, fridgeManager: FridgeManager): void {
+    if (event.key === 'Enter') {
+      // Submit the input
+      console.log('🍎 Submitting food item:', fridgeManager.getInputText());
+      fridgeManager.submitInput(this.playerId).then(success => {
+        if (success) {
+          console.log('✅ Custom item added successfully:', fridgeManager.getInputText());
+        } else {
+          console.log('❌ Failed to add custom item');
+        }
+      });
+    } else if (event.key === 'Escape') {
+      // Cancel input mode
+      console.log('❌ Cancelled adding item');
+      fridgeManager.cancelInputMode();
+    } else {
+      // Handle character input
+      if (fridgeManager.getInputText().length < 50) { // Character limit
+        fridgeManager.handleInputCharacter(event.key);
       }
     }
   }

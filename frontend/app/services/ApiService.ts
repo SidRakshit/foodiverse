@@ -44,7 +44,6 @@ export interface UpdateFridgeRequest {
 
 class ApiService {
   private baseUrl: string;
-  private authToken: string | null = null;
   private isOffline: boolean = false;
 
   constructor() {
@@ -52,18 +51,10 @@ class ApiService {
     console.log('🔗 ApiService initialized with baseUrl:', this.baseUrl);
   }
 
-  setAuthToken(token: string) {
-    this.authToken = token;
-  }
-
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
-
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`;
-    }
 
     return headers;
   }

@@ -36,6 +36,7 @@ export class BackendChecker {
     console.log('5. Refresh this page');
     console.log('');
     console.log('💡 The fridge system will work in offline mode until the backend is connected.');
+    console.log('🔓 Authentication has been disabled for easier testing.');
     console.groupEnd();
 
     // Also show a subtle notification to the user
