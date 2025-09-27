@@ -74,6 +74,51 @@ class FridgeManager {
         }
       ]
     });
+
+    // Initialize Tech Terrace apartment fridge
+    this.fridgeData.set('techterrace', {
+      apartmentId: 'techterrace-apartment-001',
+      residents: ['player1', 'roommate1', 'roommate2', 'roommate3'],
+      lastUpdated: new Date(),
+      items: [
+        {
+          id: 'energy-001',
+          name: 'Energy Drinks',
+          quantity: 4,
+          addedBy: 'roommate1',
+          dateAdded: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          expirationDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+          category: 'beverages'
+        },
+        {
+          id: 'leftover-002',
+          name: 'Ramen Noodles',
+          quantity: 3,
+          addedBy: 'roommate2',
+          dateAdded: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+          category: 'leftovers'
+        },
+        {
+          id: 'fruit-001',
+          name: 'Oranges',
+          quantity: 5,
+          addedBy: 'system',
+          dateAdded: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          category: 'fruits'
+        },
+        {
+          id: 'dairy-001',
+          name: 'Greek Yogurt',
+          quantity: 2,
+          addedBy: 'roommate3',
+          dateAdded: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          expirationDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
+          category: 'dairy'
+        }
+      ]
+    });
   }
 
   // Public methods - everyone can view
@@ -184,7 +229,8 @@ class FridgeManager {
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('🧊 Edge Apartment Fridge', uiX + uiWidth / 2, uiY + 25);
+    const apartmentName = fridgeId === 'edge' ? 'Edge Apartment' : 'Tech Terrace';
+    ctx.fillText(`🧊 ${apartmentName} Fridge`, uiX + uiWidth / 2, uiY + 25);
     
     // Close button
     ctx.fillStyle = '#E74C3C';

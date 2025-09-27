@@ -384,9 +384,33 @@ class Player {
         
         // Handle interaction input
         if (inputHandler.wasKeyJustPressed('KeyE')) {
-          console.log('🔑 E key pressed - opening fridge UI!');
+          console.log('🔑 E key pressed - opening Edge fridge UI!');
           if (!fridgeManager.isFridgeUIOpen()) {
             fridgeManager.openFridgeUI('edge');
+          }
+        }
+      } else {
+        this.nearbyFridge = null;
+      }
+    }
+    // Check if we're near a fridge in the Tech Terrace apartment
+    else if (scene.type === 'techterrace') {
+      const fridgeX = 13 * 32; // Tile 13 * 32 pixels
+      const fridgeY = 10 * 32; // Tile 10 * 32 pixels (TechTerrace fridge is at y=10)
+      
+      const distance = Math.sqrt(
+        Math.pow(this.x + this.width / 2 - (fridgeX + 16), 2) + 
+        Math.pow(this.y + this.height / 2 - (fridgeY + 16), 2)
+      );
+      
+      if (distance <= 48) { // Within interaction range
+        this.nearbyFridge = 'techterrace';
+        
+        // Handle interaction input
+        if (inputHandler.wasKeyJustPressed('KeyE')) {
+          console.log('🔑 E key pressed - opening Tech Terrace fridge UI!');
+          if (!fridgeManager.isFridgeUIOpen()) {
+            fridgeManager.openFridgeUI('techterrace');
           }
         }
       } else {

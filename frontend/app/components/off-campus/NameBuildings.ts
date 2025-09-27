@@ -4,7 +4,7 @@ import { SceneType } from '../types';
 interface OffCampusTile {
   type: 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'tree' | 'house' | 'apartment' | 'restaurant' | 'shop' | 'door' | 'floor' | 'wall' | 'furniture' | 'window' | 'stairs' | 'elevator';
   solid: boolean;
-  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'foodlion' | 'downtown' | 'tots' | 'hokiehouse' | 'centros' | 'edge';
+  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'foodlion' | 'downtown' | 'tots' | 'hokiehouse' | 'centros' | 'edge' | 'techterrace';
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
 }
 
@@ -67,7 +67,7 @@ class NameBuildings extends BaseArea {
 
     // Student apartment complexes
     this.createApartmentBuilding(world, 1, 1, 3, 2, 'edge'); // The Edge (top left)
-    this.createApartmentBuilding(world, 5, 1, 4, 2); // Apartment complex 2
+    this.createApartmentBuilding(world, 5, 1, 4, 2, 'techterrace'); // Tech Terrace (next to Edge)
     this.createApartmentBuilding(world, 11, 1, 3, 2); // Apartment complex 3
     this.createApartmentBuilding(world, 16, 1, 4, 2); // Apartment complex 4
     this.createApartmentBuilding(world, 21, 1, 3, 2); // Apartment complex 5
@@ -217,12 +217,30 @@ class NameBuildings extends BaseArea {
     ctx.fillText('CENTROS', centrosX - this.cameraX, centrosY + 8 - this.cameraY);
     ctx.shadowBlur = 0; // Reset shadow
     
+    // Tech Terrace sign (building at x: 5-8, y: 1-2)
+    const techTerraceX = 7 * this.tileSize; // Center of 4-tile wide building
+    const techTerraceY = 1 * this.tileSize - 15; // Above the building
+    
+    // Tech Terrace sign background
+    ctx.fillStyle = '#8B4513'; // Brown background
+    ctx.fillRect(techTerraceX - 35 - this.cameraX, techTerraceY - this.cameraY, 70, 12);
+    
+    // Tech Terrace text
+    ctx.fillStyle = '#FFFFFF'; // White text
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TECH TERRACE', techTerraceX - this.cameraX, techTerraceY + 8 - this.cameraY);
+    
     // Add small decorative elements
     // The Edge: Apartment/Home icon
     ctx.fillStyle = '#3498DB';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('🏠', edgeX - this.cameraX, edgeY - 5 - this.cameraY);
+    
+    // Tech Terrace: Building/Tech icon
+    ctx.fillStyle = '#8B4513';
+    ctx.fillText('🏢', techTerraceX - this.cameraX, techTerraceY - 5 - this.cameraY);
     
     // Tots: Food icon
     ctx.fillStyle = '#FF6B35';
@@ -268,6 +286,10 @@ class NameBuildings extends BaseArea {
       case 'edge':
         baseColor = '#34495E'; // Modern dark gray for The Edge
         accentColor = '#3498DB'; // Blue accent
+        break;
+      case 'techterrace':
+        baseColor = '#8B4513'; // Brown for Tech Terrace
+        accentColor = '#654321'; // Darker brown accent
         break;
       case 'restaurant':
         baseColor = '#CD853F'; // Warm color for restaurants
