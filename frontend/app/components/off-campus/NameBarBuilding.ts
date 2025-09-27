@@ -8,7 +8,7 @@ interface OffCampusTile {
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
 }
 
-class OffCampusArea extends BaseArea {
+class NameBarBuilding extends BaseArea {
   public type: SceneType = 'campus'; // Still part of the main campus scene but different area
 
   protected getAreaName(): string {
@@ -153,6 +153,76 @@ class OffCampusArea extends BaseArea {
     ctx.fillStyle = '#FF6B6B';
     ctx.font = '12px sans-serif';
     ctx.fillText('Shops • Restaurants • Apartments', 10 - this.cameraX, 50 - this.cameraY);
+    
+    // Building name signs
+    this.renderBuildingSigns(ctx);
+  }
+
+  private renderBuildingSigns(ctx: CanvasRenderingContext2D): void {
+    // Tots sign (building at x: 2-4, y: 6-7)
+    const totsX = 3 * this.tileSize; // Center of 3-tile wide building
+    const totsY = 6 * this.tileSize - 15; // Above the building
+    
+    // Tots sign background
+    ctx.fillStyle = '#FF6B35'; // Orange background
+    ctx.fillRect(totsX - 25 - this.cameraX, totsY - this.cameraY, 50, 12);
+    
+    // Tots text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TOTS', totsX - this.cameraX, totsY + 8 - this.cameraY);
+    
+    // HokieHouse sign (building at x: 9-11, y: 6-7)
+    const hokieX = 10 * this.tileSize; // Center of 3-tile wide building
+    const hokieY = 6 * this.tileSize - 15; // Above the building
+    
+    // HokieHouse sign background
+    ctx.fillStyle = '#8B0000'; // VT Maroon background
+    ctx.fillRect(hokieX - 35 - this.cameraX, hokieY - this.cameraY, 70, 12);
+    
+    // HokieHouse text
+    ctx.fillStyle = '#FF8C00'; // VT Orange text
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('HOKIE HOUSE', hokieX - this.cameraX, hokieY + 8 - this.cameraY);
+    
+    // Centros sign (building at x: 7-9, y: 11-12)
+    const centrosX = 8 * this.tileSize; // Center of 3-tile wide building
+    const centrosY = 11 * this.tileSize - 15; // Above the building
+    
+    // Centros sign background
+    ctx.fillStyle = '#FF1493'; // Hot pink background (neon club colors)
+    ctx.fillRect(centrosX - 30 - this.cameraX, centrosY - this.cameraY, 60, 12);
+    
+    // Centros text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('CENTROS', centrosX - this.cameraX, centrosY + 8 - this.cameraY);
+    
+    // Add neon glow effect for Centros (dance club)
+    ctx.shadowColor = '#FF1493';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#00FFFF'; // Cyan neon text
+    ctx.fillText('CENTROS', centrosX - this.cameraX, centrosY + 8 - this.cameraY);
+    ctx.shadowBlur = 0; // Reset shadow
+    
+    // Add small decorative elements
+    // Tots: Food icon
+    ctx.fillStyle = '#FF6B35';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🍟', totsX - this.cameraX, totsY - 5 - this.cameraY);
+    
+    // HokieHouse: Turkey (Hokie bird)
+    ctx.fillStyle = '#FF8C00';
+    ctx.fillText('🦃', hokieX - this.cameraX, hokieY - 5 - this.cameraY);
+    
+    // Centros: Dancing figures
+    ctx.fillStyle = '#FF1493';
+    ctx.fillText('💃', centrosX - 15 - this.cameraX, centrosY - 5 - this.cameraY);
+    ctx.fillText('🕺', centrosX + 15 - this.cameraX, centrosY - 5 - this.cameraY);
   }
 
   // Override tile rendering for off-campus styling
@@ -226,5 +296,4 @@ class OffCampusArea extends BaseArea {
   }
 }
 
-export default OffCampusArea;
-
+export default NameBarBuilding;

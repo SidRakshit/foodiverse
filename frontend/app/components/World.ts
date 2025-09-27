@@ -1,7 +1,7 @@
 import Player from './Player';
 import { Scene, SceneType } from './types';
 import CampusArea from './campus/CampusArea';
-import OffCampusArea from './off-campus/OffCampusArea';
+import NameBarBuilding from './off-campus/NameBarBuilding';
 
 class World implements Scene {
   public type: SceneType = 'campus';
@@ -11,13 +11,13 @@ class World implements Scene {
   private totalWorldHeight: number = 38; // 2 areas stacked (1216px total)
   
   private campusArea: CampusArea;
-  private offCampusArea: OffCampusArea;
+  private offCampusArea: NameBarBuilding;
   public cameraX: number = 0;
   public cameraY: number = 0;
 
   constructor() {
     this.campusArea = new CampusArea();
-    this.offCampusArea = new OffCampusArea();
+    this.offCampusArea = new NameBarBuilding();
   }
 
   public canMoveTo(x: number, y: number, width: number, height: number): boolean {

@@ -1,7 +1,7 @@
 import BaseOffCampusBuilding from './BaseOffCampusBuilding';
 import { SceneType } from '../types';
 
-class TotsInterior extends BaseOffCampusBuilding {
+class TotsDownstairs extends BaseOffCampusBuilding {
   public type: SceneType = 'tots';
 
   protected getBuildingName(): string {
@@ -217,4 +217,4 @@ class TotsInterior extends BaseOffCampusBuilding {
   }
 }
 
-export default TotsInterior;
+export default TotsDownstairs;

@@ -5,7 +5,7 @@ import BurrussInterior from './campus/BurrussInterior';
 import NewmanInterior from './campus/NewmanInterior';
 import TorgersenInterior from './campus/TorgersenInterior';
 import SquiresInterior from './campus/SquiresInterior';
-import TotsInterior from './off-campus/TotsInterior';
+import TotsDownstairs from './off-campus/TotsDownstairs';
 import TotsUpstairs from './off-campus/TotsUpstairs';
 import HokieHouseInterior from './off-campus/HokieHouseInterior';
 import CentrosInterior from './off-campus/CentrosInterior';
@@ -35,7 +35,7 @@ class SceneManager {
     this.scenes.set('squires', new SquiresInterior());
     
     // Off-campus restaurant interiors
-    this.scenes.set('tots', new TotsInterior());
+    this.scenes.set('tots', new TotsDownstairs());
     this.scenes.set('tots_upstairs', new TotsUpstairs());
     this.scenes.set('hokiehouse', new HokieHouseInterior());
     this.scenes.set('centros', new CentrosInterior());
