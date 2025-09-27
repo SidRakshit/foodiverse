@@ -11,6 +11,7 @@ import HokieHouseInterior from './off-campus/HokieHouseInterior';
 import CentrosInterior from './off-campus/CentrosInterior';
 import EdgeInterior from './off-campus/EdgeInterior';
 import FoodLionInterior from './off-campus/FoodLionInterior';
+import FridgeManager from './FridgeManager';
 import { Scene, SceneType } from './types';
 
 class SceneManager {
@@ -83,10 +84,11 @@ class SceneManager {
   }
 
   public checkForSceneTransition(): void {
-    // Check for ESC key to exit buildings
+    // Check for ESC key to exit buildings - but only if fridge UI is not open
+    const fridgeManager = FridgeManager.getInstance();
     const escPressed = this.inputHandler.wasKeyJustPressed('Escape');
     
-    if (escPressed) {
+    if (escPressed && !fridgeManager.isFridgeUIOpen()) {
       const currentSceneType = this.currentScene.type;
       console.log('ESC pressed! Current scene:', currentSceneType);
       

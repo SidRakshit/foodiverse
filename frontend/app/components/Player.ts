@@ -1,5 +1,6 @@
 import InputHandler from './InputHandler';
 import { Scene } from './types';
+import FridgeManager from './FridgeManager';
 
 class Player {
   public x: number;
@@ -12,55 +13,77 @@ class Player {
   private animationTimer: number = 0;
   private animationSpeed: number = 200; // ms per frame
   private isMoving: boolean = false;
+  
+  // Chat functionality
+  private isChatting: boolean = false;
+  private currentMessage: string = '';
+  private displayMessage: string = '';
+  private messageTimer: number = 0;
+  private messageDuration: number = 3000; // 3 seconds
+
+  // Interaction system
+  private nearbyFridge: string | null = null;
+  private playerId: string = 'player1'; // This should be set based on actual player identity
 
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
+    this.setupChatEventListeners();
   }
 
   update(deltaTime: number, inputHandler: InputHandler, scene: Scene): void {
-    let newX = this.x;
-    let newY = this.y;
-    this.isMoving = false;
+    // Handle chat input first
+    this.updateChat(deltaTime, inputHandler);
+    
+    // Handle fridge interactions
+    this.updateFridgeInteraction(inputHandler, scene);
+    
+    // Only allow movement if not chatting and fridge UI is not open
+    const fridgeManager = FridgeManager.getInstance();
+    if (!this.isChatting && !fridgeManager.isFridgeUIOpen()) {
+      let newX = this.x;
+      let newY = this.y;
+      this.isMoving = false;
 
-    // Handle movement input
-    if (inputHandler.isKeyPressed('ArrowUp') || inputHandler.isKeyPressed('KeyW')) {
-      newY -= (this.speed * deltaTime) / 1000;
-      this.direction = 'up';
-      this.isMoving = true;
-    }
-    if (inputHandler.isKeyPressed('ArrowDown') || inputHandler.isKeyPressed('KeyS')) {
-      newY += (this.speed * deltaTime) / 1000;
-      this.direction = 'down';
-      this.isMoving = true;
-    }
-    if (inputHandler.isKeyPressed('ArrowLeft') || inputHandler.isKeyPressed('KeyA')) {
-      newX -= (this.speed * deltaTime) / 1000;
-      this.direction = 'left';
-      this.isMoving = true;
-    }
-    if (inputHandler.isKeyPressed('ArrowRight') || inputHandler.isKeyPressed('KeyD')) {
-      newX += (this.speed * deltaTime) / 1000;
-      this.direction = 'right';
-      this.isMoving = true;
-    }
-
-    // Check collision with scene boundaries and obstacles
-    if (this.canMoveTo(newX, newY, scene)) {
-      this.x = newX;
-      this.y = newY;
-    }
-    // Movement is blocked if canMoveTo returns false - don't update position
-
-    // Update animation
-    if (this.isMoving) {
-      this.animationTimer += deltaTime;
-      if (this.animationTimer >= this.animationSpeed) {
-        this.animationFrame = (this.animationFrame + 1) % 2; // 2 frame walk cycle
-        this.animationTimer = 0;
+      // Handle movement input
+      if (inputHandler.isKeyPressed('ArrowUp') || inputHandler.isKeyPressed('KeyW')) {
+        newY -= (this.speed * deltaTime) / 1000;
+        this.direction = 'up';
+        this.isMoving = true;
       }
-    } else {
-      this.animationFrame = 0; // Reset to idle frame
+      if (inputHandler.isKeyPressed('ArrowDown') || inputHandler.isKeyPressed('KeyS')) {
+        newY += (this.speed * deltaTime) / 1000;
+        this.direction = 'down';
+        this.isMoving = true;
+      }
+      if (inputHandler.isKeyPressed('ArrowLeft') || inputHandler.isKeyPressed('KeyA')) {
+        newX -= (this.speed * deltaTime) / 1000;
+        this.direction = 'left';
+        this.isMoving = true;
+      }
+      if (inputHandler.isKeyPressed('ArrowRight') || inputHandler.isKeyPressed('KeyD')) {
+        newX += (this.speed * deltaTime) / 1000;
+        this.direction = 'right';
+        this.isMoving = true;
+      }
+
+      // Check collision with scene boundaries and obstacles
+      if (this.canMoveTo(newX, newY, scene)) {
+        this.x = newX;
+        this.y = newY;
+      }
+      // Movement is blocked if canMoveTo returns false - don't update position
+
+      // Update animation
+      if (this.isMoving) {
+        this.animationTimer += deltaTime;
+        if (this.animationTimer >= this.animationSpeed) {
+          this.animationFrame = (this.animationFrame + 1) % 2; // 2 frame walk cycle
+          this.animationTimer = 0;
+        }
+      } else {
+        this.animationFrame = 0; // Reset to idle frame
+      }
     }
   }
 
@@ -105,6 +128,16 @@ class Player {
     this.drawPixelArtCharacter(ctx, drawX, drawY, this.direction, this.animationFrame);
     
     ctx.restore();
+    
+    // Draw chat bubble if there's a message or currently typing
+    if (this.displayMessage || this.isChatting) {
+      this.renderChatBubble(ctx, screenX, screenY);
+    }
+    
+    // Render fridge interaction prompt
+    if (this.nearbyFridge && !FridgeManager.getInstance().isFridgeUIOpen()) {
+      this.renderFridgePrompt(ctx, screenX, screenY);
+    }
   }
 
   private drawPixelArtCharacter(
@@ -174,6 +207,232 @@ class Player {
       case 3: return '#FF6B6B'; // Shirt (red)
       case 4: return '#4ECDC4'; // Pants (teal)
       default: return 'transparent';
+    }
+  }
+
+  private setupChatEventListeners(): void {
+    if (typeof window !== 'undefined') {
+      // Listen for the Enter key to start chatting
+      window.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' && !this.isChatting) {
+          this.startChatting();
+          event.preventDefault();
+        } else if (event.key === 'Enter' && this.isChatting) {
+          this.sendMessage();
+          event.preventDefault();
+        } else if (event.key === 'Escape' && this.isChatting) {
+          this.cancelChatting();
+          event.preventDefault();
+        } else if (this.isChatting) {
+          this.handleChatInput(event);
+        }
+      });
+    }
+  }
+
+  private updateChat(deltaTime: number, inputHandler: InputHandler): void {
+    // Update message display timer
+    if (this.displayMessage && this.messageTimer > 0) {
+      this.messageTimer -= deltaTime;
+      if (this.messageTimer <= 0) {
+        this.displayMessage = '';
+        this.messageTimer = 0;
+      }
+    }
+
+    // Check for Enter key to start chatting
+    if (inputHandler.wasKeyJustPressed('Enter') && !this.isChatting) {
+      this.startChatting();
+    }
+  }
+
+  private startChatting(): void {
+    this.isChatting = true;
+    this.currentMessage = '';
+    console.log('Started chatting mode');
+  }
+
+  private cancelChatting(): void {
+    this.isChatting = false;
+    this.currentMessage = '';
+    console.log('Cancelled chatting mode');
+  }
+
+  private sendMessage(): void {
+    if (this.currentMessage.trim()) {
+      this.displayMessage = this.currentMessage.trim();
+      this.messageTimer = this.messageDuration;
+      console.log('Player said:', this.displayMessage);
+    }
+    this.isChatting = false;
+    this.currentMessage = '';
+  }
+
+  private handleChatInput(event: KeyboardEvent): void {
+    if (event.key === 'Backspace') {
+      this.currentMessage = this.currentMessage.slice(0, -1);
+      event.preventDefault();
+    } else if (event.key.length === 1) {
+      // Only add printable characters
+      this.currentMessage += event.key;
+      event.preventDefault();
+    }
+  }
+
+  private renderChatBubble(ctx: CanvasRenderingContext2D, playerX: number, playerY: number): void {
+    const message = this.isChatting ? this.currentMessage + '|' : this.displayMessage;
+    if (!message) return;
+
+    // Bubble settings
+    const padding = 8;
+    const bubbleHeight = 30;
+    const maxWidth = 200;
+    const bubbleY = playerY - bubbleHeight - 10; // Position above player
+
+    // Measure text
+    ctx.font = '12px Arial';
+    const textWidth = Math.min(ctx.measureText(message).width, maxWidth - padding * 2);
+    const bubbleWidth = textWidth + padding * 2;
+    const bubbleX = playerX + this.width - bubbleWidth / 2;
+
+    // Draw bubble background
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    
+    // Rounded rectangle for bubble
+    this.drawRoundedRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw bubble tail
+    ctx.beginPath();
+    ctx.moveTo(playerX + this.width / 2, bubbleY + bubbleHeight);
+    ctx.lineTo(playerX + this.width / 2 - 5, bubbleY + bubbleHeight + 8);
+    ctx.lineTo(playerX + this.width / 2 + 5, bubbleY + bubbleHeight + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(
+      message,
+      bubbleX + bubbleWidth / 2,
+      bubbleY + bubbleHeight / 2,
+      maxWidth - padding * 2
+    );
+
+    ctx.restore();
+  }
+
+  private drawRoundedRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ): void {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
+  private renderFridgePrompt(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
+    const promptX = screenX + this.width / 2;
+    const promptY = screenY - 30;
+    
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(promptX - 35, promptY - 15, 70, 20);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press E', promptX, promptY - 5);
+    ctx.fillText('to open fridge', promptX, promptY + 5);
+    ctx.restore();
+  }
+
+  private updateFridgeInteraction(inputHandler: InputHandler, scene: Scene): void {
+    const fridgeManager = FridgeManager.getInstance();
+    
+    // Check if we're near a fridge in the Edge apartment
+    if (scene.type === 'edge') {
+      const fridgeX = 13 * 32; // Tile 13 * 32 pixels
+      const fridgeY = 9 * 32;  // Tile 9 * 32 pixels
+      
+      const distance = Math.sqrt(
+        Math.pow(this.x + this.width / 2 - (fridgeX + 16), 2) + 
+        Math.pow(this.y + this.height / 2 - (fridgeY + 16), 2)
+      );
+      
+      if (distance <= 48) { // Within interaction range
+        this.nearbyFridge = 'edge';
+        
+        // Handle interaction input
+        if (inputHandler.wasKeyJustPressed('KeyE')) {
+          console.log('🔑 E key pressed - opening fridge UI!');
+          if (!fridgeManager.isFridgeUIOpen()) {
+            fridgeManager.openFridgeUI('edge');
+          }
+        }
+      } else {
+        this.nearbyFridge = null;
+      }
+    } else {
+      this.nearbyFridge = null;
+    }
+
+    // Handle UI input when fridge is open
+    if (fridgeManager.isFridgeUIOpen()) {
+      this.handleFridgeUIInput(inputHandler, fridgeManager);
+    }
+  }
+
+  private handleFridgeUIInput(inputHandler: InputHandler, fridgeManager: FridgeManager): void {
+    // Close with ESC - this should have priority over scene transitions
+    if (inputHandler.wasKeyJustPressed('Escape')) {
+      console.log('🧊 ESC pressed - closing fridge UI');
+      fridgeManager.closeFridgeUI();
+      return;
+    }
+
+    const currentFridge = fridgeManager.getCurrentFridge();
+    if (!currentFridge) return;
+
+    const canModify = fridgeManager.canPlayerModify(currentFridge, this.playerId);
+    
+    // Navigation
+    if (inputHandler.wasKeyJustPressed('ArrowUp') || inputHandler.wasKeyJustPressed('KeyW')) {
+      fridgeManager.selectPreviousItem();
+    }
+    if (inputHandler.wasKeyJustPressed('ArrowDown') || inputHandler.wasKeyJustPressed('KeyS')) {
+      fridgeManager.selectNextItem();
+    }
+    
+    if (canModify) {
+      // Add item with 'A' key
+      if (inputHandler.wasKeyJustPressed('KeyA')) {
+        fridgeManager.addRandomItem(currentFridge, this.playerId);
+      }
+      
+      // Delete selected item with 'D' key
+      if (inputHandler.wasKeyJustPressed('KeyD')) {
+        fridgeManager.deleteSelectedItem(this.playerId);
+      }
     }
   }
 

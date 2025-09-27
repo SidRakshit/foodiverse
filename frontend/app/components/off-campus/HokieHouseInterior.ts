@@ -1,8 +1,10 @@
 import BaseOffCampusBuilding from './BaseOffCampusBuilding';
 import { SceneType } from '../types';
+import { BartenderNPC } from './BartenderNPC';
 
 class HokieHouseInterior extends BaseOffCampusBuilding {
   public type: SceneType = 'hokiehouse';
+  private bartender: BartenderNPC;
 
   protected getBuildingName(): string {
     return 'Hokie House - VT Sports Bar & Grill';
@@ -10,6 +12,12 @@ class HokieHouseInterior extends BaseOffCampusBuilding {
 
   protected getBuildingType(): 'apartment' | 'mixed_use' | 'commercial' {
     return 'commercial';
+  }
+
+  constructor() {
+    super();
+    // Position bartender near the bottles and bar area (left side)
+    this.bartender = new BartenderNPC(80, 170);
   }
 
   protected generateBuilding(): any[][] {
@@ -73,6 +81,11 @@ class HokieHouseInterior extends BaseOffCampusBuilding {
     }
     
     return interior;
+  }
+
+  public update(deltaTime: number): void {
+    super.update(deltaTime);
+    this.bartender.update(deltaTime);
   }
 
   protected renderBuildingSpecificElements(ctx: CanvasRenderingContext2D): void {
@@ -158,12 +171,11 @@ class HokieHouseInterior extends BaseOffCampusBuilding {
     
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('• Hokie Wings ....... $12', 460 - this.cameraX, 290 - this.cameraY);
-    ctx.fillText('• Turkey Legs ...... $15', 460 - this.cameraX, 305 - this.cameraY);
-    ctx.fillText('• Hokie Burger ..... $14', 460 - this.cameraX, 320 - this.cameraY);
-    ctx.fillText('• Maroon & Orange', 460 - this.cameraX, 335 - this.cameraY);
-    ctx.fillText('  Nachos ........... $10', 460 - this.cameraX, 345 - this.cameraY);
-    
+    ctx.fillText('• Trash Can ....... $10', 460 - this.cameraX, 290 - this.cameraY);
+    ctx.fillText('• Corona ...... $5', 460 - this.cameraX, 305 - this.cameraY);
+    ctx.fillText('• Blue motorcycle ..... $8', 460 - this.cameraX, 320 - this.cameraY);
+    ctx.fillText('• tequila soda ..... $10', 460 - this.cameraX, 335 - this.cameraY);
+  
     // Hokie Bird logo on floor
     ctx.fillStyle = '#8B0000';
     ctx.globalAlpha = 0.3;
@@ -192,6 +204,9 @@ class HokieHouseInterior extends BaseOffCampusBuilding {
     ctx.fillStyle = '#000000';
     ctx.fillRect(88 - this.cameraX, 155 - this.cameraY, 8, 6);
     ctx.fillRect(98 - this.cameraX, 155 - this.cameraY, 8, 6);
+
+    // Render the bartender NPC
+    this.bartender.render(ctx, this.cameraX, this.cameraY);
   }
 }
 

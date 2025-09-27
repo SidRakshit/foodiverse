@@ -17,9 +17,12 @@ class InputHandler {
   private handleKeyDown(event: KeyboardEvent): void {
     const key = event.code;
     
-    // Debug ESC key presses
+    // Debug key presses
     if (key === 'Escape') {
       console.log('🔑 ESC key detected in InputHandler');
+    }
+    if (key === 'KeyE') {
+      console.log('🔑 E key detected in InputHandler');
     }
     
     // Prevent default behavior for game keys
@@ -46,7 +49,7 @@ class InputHandler {
     const gameKeys = [
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
       'KeyW', 'KeyA', 'KeyS', 'KeyD',
-      'Space', 'Enter', 'Escape'
+      'Space', 'Enter', 'Escape', 'KeyE'
     ];
     return gameKeys.includes(key);
   }

@@ -2,6 +2,7 @@ import Player from './Player';
 import World from './World';
 import InputHandler from './InputHandler';
 import SceneManager from './SceneManager';
+import FridgeManager from './FridgeManager';
 
 class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -61,11 +62,11 @@ class GameEngine {
     // Check scene transitions BEFORE clearing input state
     this.sceneManager.update(deltaTime);
     
-    // Update input (this clears keyPressed state)
-    this.inputHandler.update();
-    
-    // Update player
+    // Update player BEFORE clearing input state
     this.player.update(deltaTime, this.inputHandler, this.sceneManager.getCurrentScene());
+    
+    // Update input (this clears keyPressed state) - do this AFTER player has processed input
+    this.inputHandler.update();
   }
 
   private render(): void {
@@ -79,6 +80,10 @@ class GameEngine {
     // Render player
     const cameraPos = this.sceneManager.getCameraPosition();
     this.player.render(this.ctx, cameraPos.x, cameraPos.y);
+    
+    // Render fridge UI on top of everything
+    const fridgeManager = FridgeManager.getInstance();
+    fridgeManager.renderFridgeUI(this.ctx, 'player1'); // Use actual player ID
   }
 
 }

@@ -4,7 +4,7 @@ import { Scene, SceneType } from '../types';
 interface ApartmentTile {
   type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'lobby' | 'mailroom';
   solid: boolean;
-  furniture?: 'couch' | 'table' | 'chair' | 'desk' | 'bed' | 'kitchen' | 'mailbox' | 'vending' | 'laundry';
+  furniture?: 'couch' | 'table' | 'chair' | 'desk' | 'bed' | 'kitchen' | 'mailbox' | 'vending' | 'laundry' | 'refrigerator' | 'dresser' | 'tv' | 'counter' | 'sink';
 }
 
 abstract class BaseOffCampusBuilding implements Scene {
@@ -217,6 +217,63 @@ abstract class BaseOffCampusBuilding implements Scene {
         ctx.fillStyle = '#000000'; // Black for doors
         ctx.fillRect(x + 4, y + 6, 8, 8);
         ctx.fillRect(x + 20, y + 6, 8, 8);
+        break;
+      case 'refrigerator':
+        ctx.fillStyle = '#F8F9FA'; // White refrigerator
+        ctx.fillRect(x + 2, y + 2, 28, 28);
+        ctx.fillStyle = '#6C757D'; // Handle
+        ctx.fillRect(x + 26, y + 10, 2, 8);
+        ctx.fillStyle = '#000000'; // Door line
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 2, y + 16);
+        ctx.lineTo(x + 30, y + 16);
+        ctx.stroke();
+        // Add subtle glow effect to indicate it's interactive
+        ctx.save();
+        ctx.shadowColor = '#4ECDC4';
+        ctx.shadowBlur = 4;
+        ctx.strokeStyle = '#4ECDC4';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 2, y + 2, 28, 28);
+        ctx.restore();
+        break;
+      case 'dresser':
+        ctx.fillStyle = '#8B4513'; // Brown wood
+        ctx.fillRect(x + 2, y + 8, 28, 16);
+        ctx.fillStyle = '#654321'; // Darker brown for drawers
+        ctx.fillRect(x + 4, y + 10, 10, 4);
+        ctx.fillRect(x + 16, y + 10, 10, 4);
+        ctx.fillRect(x + 4, y + 16, 10, 4);
+        ctx.fillRect(x + 16, y + 16, 10, 4);
+        break;
+      case 'tv':
+        ctx.fillStyle = '#000000'; // TV frame
+        ctx.fillRect(x + 4, y + 8, 24, 16);
+        ctx.fillStyle = '#1E3A8A'; // TV screen
+        ctx.fillRect(x + 6, y + 10, 20, 12);
+        break;
+      case 'counter':
+        ctx.fillStyle = '#D1D5DB'; // Counter color
+        ctx.fillRect(x + 2, y + 8, 28, 16);
+        // Stove burners
+        ctx.fillStyle = '#374151';
+        ctx.beginPath();
+        ctx.arc(x + 8, y + 16, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + 16, y + 16, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + 24, y + 16, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        break;
+      case 'sink':
+        ctx.fillStyle = '#9CA3AF'; // Sink color
+        ctx.fillRect(x + 4, y + 8, 24, 16);
+        ctx.fillStyle = '#6B7280'; // Faucet
+        ctx.fillRect(x + 14, y + 6, 4, 8);
         break;
       default:
         ctx.fillStyle = '#8B4513'; // Default brown furniture

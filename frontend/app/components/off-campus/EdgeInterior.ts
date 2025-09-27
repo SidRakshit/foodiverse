@@ -18,92 +18,176 @@ class EdgeInterior extends BaseOffCampusBuilding {
     for (let y = 0; y < this.buildingHeight; y++) {
       interior[y] = [];
       for (let x = 0; x < this.buildingWidth; x++) {
-        // Create the layout for The Edge apartment complex
+        // Create the layout for a 4-bedroom apartment with kitchen, living room, and private bathrooms
         
         // Outer walls
         if (x === 0 || x === this.buildingWidth - 1 || y === 0 || y === this.buildingHeight - 1) {
           interior[y][x] = { type: 'wall', solid: true };
         }
-        // Exit door at bottom center
+        // Entry door at bottom center
         else if (y === this.buildingHeight - 1 && x === Math.floor(this.buildingWidth / 2)) {
           interior[y][x] = { type: 'door', solid: false };
         }
-        // Lobby area (center front)
-        else if (x >= 8 && x <= 11 && y >= 11 && y <= 13) {
-          interior[y][x] = { type: 'lobby', solid: false };
-        }
-        // Reception desk
-        else if (x >= 9 && x <= 10 && y === 10) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'desk' };
-        }
-        // Lobby seating
-        else if ((x === 7 && y === 12) || (x === 12 && y === 12)) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'couch' };
-        }
-        // Coffee table in lobby
-        else if (x === 9 && y === 12) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'table' };
-        }
-        // Elevators (left side)
-        else if (x >= 2 && x <= 3 && y >= 6 && y <= 8) {
-          interior[y][x] = { type: 'elevator', solid: false };
-        }
-        // Stairs (right side)
-        else if (x >= 16 && x <= 18 && y >= 6 && y <= 9) {
-          interior[y][x] = { type: 'stairs', solid: false };
-        }
-        // Mailroom (back left)
-        else if (x >= 2 && x <= 4 && y >= 2 && y <= 4) {
-          interior[y][x] = { type: 'mailroom', solid: false };
-        }
-        // Mailboxes
-        else if (x >= 2 && x <= 4 && y === 1) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'mailbox' };
-        }
-        // Laundry room (back center)
-        else if (x >= 7 && x <= 12 && y >= 2 && y <= 4) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'laundry' };
-        }
-        // Vending machines (back right)
-        else if (x >= 15 && x <= 16 && y >= 2 && y <= 3) {
-          interior[y][x] = { type: 'furniture', solid: true, furniture: 'vending' };
-        }
-        // Study lounge (left side)
-        else if (x >= 2 && x <= 6 && y >= 10 && y <= 12) {
-          // Study tables
-          if ((x === 3 && y === 10) || (x === 5 && y === 11)) {
-            interior[y][x] = { type: 'furniture', solid: true, furniture: 'desk' };
+        
+        // LIVING ROOM (center area)
+        else if (x >= 7 && x <= 12 && y >= 9 && y <= 12) {
+          // TV on wall
+          if (x === 7 && y === 10) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'tv' };
           }
-          // Study chairs
-          else if ((x === 2 && y === 10) || (x === 4 && y === 10) || 
-                   (x === 4 && y === 11) || (x === 6 && y === 11)) {
+          // Couch facing TV
+          else if (x >= 9 && x <= 11 && y === 11) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'couch' };
+          }
+          // Coffee table
+          else if (x === 10 && y === 10) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'table' };
+          }
+          else {
+            interior[y][x] = { type: 'floor', solid: false };
+          }
+        }
+        
+        // KITCHEN (right side)
+        else if (x >= 13 && x <= 17 && y >= 9 && y <= 12) {
+          // Refrigerator
+          if (x === 13 && y === 9) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'refrigerator' };
+          }
+          // Kitchen counter/stove
+          else if (x >= 14 && x <= 16 && y === 9) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'counter' };
+          }
+          // Sink
+          else if (x === 17 && y === 10) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'sink' };
+          }
+          // Dining table
+          else if (x >= 14 && x <= 15 && y === 11) {
+          interior[y][x] = { type: 'furniture', solid: true, furniture: 'table' };
+          }
+          // Dining chairs
+          else if ((x === 13 && y === 11) || (x === 16 && y === 11)) {
             interior[y][x] = { type: 'furniture', solid: true, furniture: 'chair' };
           }
           else {
             interior[y][x] = { type: 'floor', solid: false };
           }
         }
-        // Fitness area (right side)
-        else if (x >= 13 && x <= 17 && y >= 10 && y <= 12) {
-          // Exercise equipment (represented as furniture)
-          if ((x === 14 && y === 10) || (x === 16 && y === 11)) {
-            interior[y][x] = { type: 'furniture', solid: true, furniture: 'desk' };
+        
+        // BEDROOM 1 (top left)
+        else if (x >= 2 && x <= 6 && y >= 2 && y <= 6) {
+          // Bedroom 1 walls
+          if (x === 6 && y >= 2 && y <= 6) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          else if (y === 6 && x >= 2 && x <= 5) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          // Bedroom 1 door
+          else if (x === 5 && y === 6) {
+            interior[y][x] = { type: 'door', solid: false };
+          }
+          // Bed
+          else if (x >= 3 && x <= 4 && y >= 3 && y <= 4) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'bed' };
+          }
+          // Dresser
+          else if (x === 2 && y === 5) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'dresser' };
           }
           else {
             interior[y][x] = { type: 'floor', solid: false };
           }
         }
-        // Windows along front and sides
-        else if ((y === 0 && (x === 4 || x === 7 || x === 12 || x === 15)) ||
-                 (x === 0 && (y === 4 || y === 8 || y === 12)) ||
-                 (x === this.buildingWidth - 1 && (y === 4 || y === 8 || y === 12))) {
+        
+        
+        // BEDROOM 2 (top right)
+        else if (x >= 13 && x <= 17 && y >= 2 && y <= 6) {
+          // Bedroom 2 walls
+          if (x === 13 && y >= 2 && y <= 6) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          else if (y === 6 && x >= 14 && x <= 17) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          // Bedroom 2 door
+          else if (x === 14 && y === 6) {
+            interior[y][x] = { type: 'door', solid: false };
+          }
+          // Bed
+          else if (x >= 15 && x <= 16 && y >= 3 && y <= 4) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'bed' };
+          }
+          // Dresser
+          else if (x === 17 && y === 5) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'dresser' };
+          }
+          else {
+            interior[y][x] = { type: 'floor', solid: false };
+          }
+        }
+        
+        
+        // BEDROOM 3 (bottom left)
+        else if (x >= 2 && x <= 6 && y >= 9 && y <= 13) {
+          // Bedroom 3 walls
+          if (x === 6 && y >= 9 && y <= 13) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          else if (y === 9 && x >= 2 && x <= 5) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          // Bedroom 3 door
+          else if (x === 5 && y === 9) {
+            interior[y][x] = { type: 'door', solid: false };
+          }
+          // Bed
+          else if (x >= 3 && x <= 4 && y >= 10 && y <= 11) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'bed' };
+          }
+          // Dresser
+          else if (x === 2 && y === 12) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'dresser' };
+          }
+          else {
+            interior[y][x] = { type: 'floor', solid: false };
+          }
+        }
+        
+        
+        // BEDROOM 4 (center back)
+        else if (x >= 8 && x <= 12 && y >= 2 && y <= 6) {
+          // Bedroom 4 walls
+          if (y === 6 && x >= 8 && x <= 12) {
+            interior[y][x] = { type: 'wall', solid: true };
+          }
+          // Bedroom 4 door
+          else if (x === 10 && y === 6) {
+            interior[y][x] = { type: 'door', solid: false };
+          }
+          // Bed
+          else if (x >= 9 && x <= 10 && y >= 3 && y <= 4) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'bed' };
+          }
+          // Dresser
+          else if (x === 11 && y === 5) {
+            interior[y][x] = { type: 'furniture', solid: true, furniture: 'dresser' };
+          }
+          else {
+            interior[y][x] = { type: 'floor', solid: false };
+          }
+        }
+        
+        
+        // Windows
+        else if ((y === 0 && (x === 3 || x === 5 || x === 9 || x === 11 || x === 15 || x === 17)) ||
+                 (x === 0 && (y === 3 || y === 5 || y === 10 || y === 12)) ||
+                 (x === this.buildingWidth - 1 && (y === 3 || y === 5 || y === 10 || y === 12))) {
           interior[y][x] = { type: 'window', solid: true };
         }
-        // Hallway (center corridor)
-        else if (x >= 7 && x <= 12 && y >= 5 && y <= 9) {
-          interior[y][x] = { type: 'floor', solid: false };
-        }
-        // Floor for all other areas
+        
+        // Floor for hallways and other areas
         else {
           interior[y][x] = { type: 'floor', solid: false };
         }
@@ -114,200 +198,181 @@ class EdgeInterior extends BaseOffCampusBuilding {
   }
 
   protected renderBuildingSpecificElements(ctx: CanvasRenderingContext2D): void {
-    // The Edge apartment complex specific elements
+    // 4-Bedroom Apartment Interior Rendering
     
-    // Building name and branding
-    ctx.fillStyle = '#2C3E50'; // Dark blue-gray branding
-    ctx.font = 'bold 22px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('THE EDGE', 400 - this.cameraX, 35 - this.cameraY);
-    
-    ctx.fillStyle = '#3498DB'; // Light blue accent
-    ctx.font = 'bold 14px serif';
-    ctx.fillText('Student Living Community', 400 - this.cameraX, 55 - this.cameraY);
-    
-    // Reception desk with modern styling
-    ctx.fillStyle = '#34495E'; // Dark gray modern desk
-    ctx.fillRect(300 - this.cameraX, 320 - this.cameraY, 64, 32);
-    
-    // Computer/monitor on reception desk
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(315 - this.cameraX, 325 - this.cameraY, 16, 12);
-    ctx.fillStyle = '#3498DB';
-    ctx.fillRect(317 - this.cameraX, 327 - this.cameraY, 12, 8);
-    
-    // Modern lobby lighting fixtures
-    ctx.fillStyle = '#F39C12'; // Warm light
-    ctx.beginPath();
-    ctx.arc(200 - this.cameraX, 120 - this.cameraY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(400 - this.cameraX, 120 - this.cameraY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(600 - this.cameraX, 120 - this.cameraY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Light beams from fixtures
-    ctx.fillStyle = '#F1C40F';
-    ctx.globalAlpha = 0.2;
-    for (let lightX of [200, 400, 600]) {
-      ctx.beginPath();
-      ctx.arc(lightX - this.cameraX, 300 - this.cameraY, 40, 0, 2 * Math.PI);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1.0;
-    
-    // Elevator indicators
-    ctx.fillStyle = '#E74C3C'; // Red for elevator
-    ctx.fillRect(85 - this.cameraX, 180 - this.cameraY, 20, 4);
-    ctx.fillStyle = '#27AE60'; // Green for available
-    ctx.fillRect(85 - this.cameraX, 190 - this.cameraY, 20, 4);
-    
-    // Floor indicator
+    // Apartment title
     ctx.fillStyle = '#2C3E50';
-    ctx.font = '12px sans-serif';
+    ctx.font = 'bold 20px serif';
     ctx.textAlign = 'center';
-    ctx.fillText('1', 95 - this.cameraX, 175 - this.cameraY);
+    ctx.fillText('THE EDGE - 4BR APARTMENT', 400 - this.cameraX, 35 - this.cameraY);
     
-    // Elevator buttons
-    ctx.fillStyle = '#BDC3C7';
-    ctx.fillRect(92 - this.cameraX, 200 - this.cameraY, 6, 6);
-    ctx.fillRect(92 - this.cameraX, 210 - this.cameraY, 6, 6);
+    // LIVING ROOM ELEMENTS
+    // TV Screen (wall-mounted)
+    ctx.fillStyle = '#000000'; // TV frame
+    ctx.fillRect(224 - this.cameraX, 320 - this.cameraY, 48, 32);
+    ctx.fillStyle = '#1E3A8A'; // TV screen
+    ctx.fillRect(228 - this.cameraX, 324 - this.cameraY, 40, 24);
     
-    // Laundry room equipment details
-    ctx.fillStyle = '#FFFFFF'; // White washers
-    ctx.fillRect(240 - this.cameraX, 80 - this.cameraY, 30, 40);
-    ctx.fillRect(280 - this.cameraX, 80 - this.cameraY, 30, 40);
-    ctx.fillRect(320 - this.cameraX, 80 - this.cameraY, 30, 40);
+    // TV stand/mount
+    ctx.fillStyle = '#4B5563';
+    ctx.fillRect(240 - this.cameraX, 352 - this.cameraY, 16, 8);
     
-    // Washer doors
-    ctx.fillStyle = '#34495E';
-    ctx.beginPath();
-    ctx.arc(255 - this.cameraX, 100 - this.cameraY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(295 - this.cameraX, 100 - this.cameraY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(335 - this.cameraX, 100 - this.cameraY, 8, 0, 2 * Math.PI);
-    ctx.fill();
+    // Coffee table details
+    ctx.fillStyle = '#8B4513'; // Wood color
+    ctx.fillRect(320 - this.cameraX, 320 - this.cameraY, 32, 32);
+    // Items on coffee table
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(325 - this.cameraX, 325 - this.cameraY, 6, 8); // Remote
+    ctx.fillStyle = '#FF6B6B';
+    ctx.fillRect(335 - this.cameraX, 330 - this.cameraY, 8, 4); // Magazine
     
-    // Dryers (below washers)
-    ctx.fillStyle = '#ECF0F1'; // Light gray dryers
-    ctx.fillRect(240 - this.cameraX, 125 - this.cameraY, 30, 40);
-    ctx.fillRect(280 - this.cameraX, 125 - this.cameraY, 30, 40);
-    ctx.fillRect(320 - this.cameraX, 125 - this.cameraY, 30, 40);
+    // Couch details
+    ctx.fillStyle = '#6B7280'; // Couch color
+    ctx.fillRect(288 - this.cameraX, 352 - this.cameraY, 96, 32);
+    // Couch cushions
+    ctx.fillStyle = '#9CA3AF';
+    ctx.fillRect(292 - this.cameraX, 356 - this.cameraY, 20, 24);
+    ctx.fillRect(316 - this.cameraX, 356 - this.cameraY, 20, 24);
+    ctx.fillRect(340 - this.cameraX, 356 - this.cameraY, 20, 24);
+    ctx.fillRect(364 - this.cameraX, 356 - this.cameraY, 20, 24);
     
-    // Vending machines
-    ctx.fillStyle = '#E74C3C'; // Red vending machine
-    ctx.fillRect(490 - this.cameraX, 70 - this.cameraY, 40, 60);
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(495 - this.cameraX, 75 - this.cameraY, 30, 20);
-    
-    // Vending machine buttons
-    ctx.fillStyle = '#F39C12';
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 4; j++) {
-        ctx.fillRect(498 + j * 6 - this.cameraX, 100 + i * 6 - this.cameraY, 4, 4);
-      }
-    }
-    
-    // Study area details
-    ctx.fillStyle = '#8E44AD'; // Purple study area accent
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('📚 STUDY LOUNGE', 140 - this.cameraX, 280 - this.cameraY);
-    
-    // Study materials on desks
-    ctx.fillStyle = '#F39C12';
-    ctx.fillRect(95 - this.cameraX, 318 - this.cameraY, 6, 8); // Book
-    ctx.fillRect(155 - this.cameraX, 348 - this.cameraY, 8, 6); // Laptop
-    
-    // Fitness area
-    ctx.fillStyle = '#E67E22'; // Orange fitness accent
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('💪 FITNESS CENTER', 500 - this.cameraX, 280 - this.cameraY);
-    
-    // Exercise equipment representation
-    ctx.fillStyle = '#95A5A6';
-    ctx.fillRect(450 - this.cameraX, 320 - this.cameraY, 20, 16); // Treadmill
-    ctx.fillRect(520 - this.cameraX, 350 - this.cameraY, 16, 20); // Weight machine
-    
-    // Mailroom signage
-    ctx.fillStyle = '#16A085';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('📬 MAIL ROOM', 100 - this.cameraX, 50 - this.cameraY);
-    
-    // Package lockers
-    ctx.fillStyle = '#2C3E50';
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 3; j++) {
-        ctx.fillRect(85 + i * 12 - this.cameraX, 65 + j * 10 - this.cameraY, 10, 8);
-      }
-    }
-    
-    // Apartment directory board
-    ctx.fillStyle = '#34495E';
-    ctx.fillRect(600 - this.cameraX, 320 - this.cameraY, 80, 60);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('DIRECTORY', 640 - this.cameraX, 335 - this.cameraY);
-    ctx.font = '8px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('Floor 2: 201-210', 610 - this.cameraX, 350 - this.cameraY);
-    ctx.fillText('Floor 3: 301-310', 610 - this.cameraX, 360 - this.cameraY);
-    ctx.fillText('Floor 4: 401-410', 610 - this.cameraX, 370 - this.cameraY);
-    
-    // Modern apartment amenities list
-    ctx.fillStyle = '#2C3E50';
-    ctx.fillRect(50 - this.cameraX, 400 - this.cameraY, 200, 80);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('AMENITIES', 150 - this.cameraX, 415 - this.cameraY);
-    
-    ctx.font = '9px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('• High-Speed WiFi', 60 - this.cameraX, 430 - this.cameraY);
-    ctx.fillText('• Furnished Units', 60 - this.cameraX, 442 - this.cameraY);
-    ctx.fillText('• Fitness Center', 60 - this.cameraX, 454 - this.cameraY);
-    ctx.fillText('• Study Lounges', 60 - this.cameraX, 466 - this.cameraY);
-    
-    // VT-themed decorative elements
-    ctx.fillStyle = '#8B0000'; // VT Maroon
-    ctx.font = '16px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🏠', 650 - this.cameraX, 200 - this.cameraY);
-    
-    ctx.fillStyle = '#FF8C00'; // VT Orange
-    ctx.fillText('🎓', 100 - this.cameraX, 450 - this.cameraY);
-    
-    // Modern floor pattern in lobby
-    ctx.strokeStyle = '#BDC3C7';
+    // KITCHEN ELEMENTS
+    // Refrigerator details
+    ctx.fillStyle = '#F8F9FA'; // White refrigerator
+    ctx.fillRect(416 - this.cameraX, 288 - this.cameraY, 32, 64);
+    ctx.fillStyle = '#6C757D'; // Handle
+    ctx.fillRect(444 - this.cameraX, 310 - this.cameraY, 2, 20);
+    ctx.fillStyle = '#000000'; // Door line
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 1;
-    for (let x = 250; x < 550; x += 32) {
-      ctx.beginPath();
-      ctx.moveTo(x - this.cameraX, 350 - this.cameraY);
-      ctx.lineTo(x - this.cameraX, 420 - this.cameraY);
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.moveTo(416 - this.cameraX, 320 - this.cameraY);
+    ctx.lineTo(448 - this.cameraX, 320 - this.cameraY);
+    ctx.stroke();
     
-    // Emergency exit signs
-    ctx.fillStyle = '#27AE60';
-    ctx.fillRect(30 - this.cameraX, 200 - this.cameraY, 25, 12);
-    ctx.fillRect(745 - this.cameraX, 200 - this.cameraY, 25, 12);
+    // Kitchen counter/stove
+    ctx.fillStyle = '#D1D5DB'; // Counter color
+    ctx.fillRect(448 - this.cameraX, 288 - this.cameraY, 96, 32);
+    // Stove burners
+    ctx.fillStyle = '#374151';
+    ctx.beginPath();
+    ctx.arc(464 - this.cameraX, 304 - this.cameraY, 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(488 - this.cameraX, 304 - this.cameraY, 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(512 - this.cameraX, 304 - this.cameraY, 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(528 - this.cameraX, 304 - this.cameraY, 6, 0, 2 * Math.PI);
+    ctx.fill();
     
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '8px sans-serif';
+    // Kitchen sink
+    ctx.fillStyle = '#9CA3AF'; // Sink color
+    ctx.fillRect(544 - this.cameraX, 320 - this.cameraY, 32, 24);
+    ctx.fillStyle = '#6B7280'; // Faucet
+    ctx.fillRect(556 - this.cameraX, 315 - this.cameraY, 8, 12);
+    
+    // Dining table and chairs
+    ctx.fillStyle = '#8B4513'; // Wood table
+    ctx.fillRect(448 - this.cameraX, 352 - this.cameraY, 64, 32);
+    // Chairs
+    ctx.fillStyle = '#D4A574';
+    ctx.fillRect(416 - this.cameraX, 352 - this.cameraY, 24, 32); // Left chair
+    ctx.fillRect(520 - this.cameraX, 352 - this.cameraY, 24, 32); // Right chair
+    
+    // BEDROOM DETAILS
+    // Bedroom 1 (top left)
+    ctx.fillStyle = '#4F46E5'; // Bed color
+    ctx.fillRect(96 - this.cameraX, 96 - this.cameraY, 64, 64);
+    ctx.fillStyle = '#EDE9FE'; // Pillow
+    ctx.fillRect(100 - this.cameraX, 100 - this.cameraY, 24, 16);
+    ctx.fillStyle = '#8B5CF6'; // Blanket
+    ctx.fillRect(100 - this.cameraX, 120 - this.cameraY, 56, 36);
+    
+    // Dresser in bedroom 1
+    ctx.fillStyle = '#92400E';
+    ctx.fillRect(64 - this.cameraX, 160 - this.cameraY, 32, 32);
+    
+    // Bedroom 2 (top right)
+    ctx.fillStyle = '#059669'; // Different bed color
+    ctx.fillRect(480 - this.cameraX, 96 - this.cameraY, 64, 64);
+    ctx.fillStyle = '#D1FAE5'; // Pillow
+    ctx.fillRect(484 - this.cameraX, 100 - this.cameraY, 24, 16);
+    ctx.fillStyle = '#34D399'; // Blanket
+    ctx.fillRect(484 - this.cameraX, 120 - this.cameraY, 56, 36);
+    
+    // Dresser in bedroom 2
+    ctx.fillStyle = '#92400E';
+    ctx.fillRect(544 - this.cameraX, 160 - this.cameraY, 32, 32);
+    
+    // Bedroom 3 (bottom left)
+    ctx.fillStyle = '#DC2626'; // Different bed color
+    ctx.fillRect(96 - this.cameraX, 320 - this.cameraY, 64, 64);
+    ctx.fillStyle = '#FEE2E2'; // Pillow
+    ctx.fillRect(100 - this.cameraX, 324 - this.cameraY, 24, 16);
+    ctx.fillStyle = '#F87171'; // Blanket
+    ctx.fillRect(100 - this.cameraX, 344 - this.cameraY, 56, 36);
+    
+    // Dresser in bedroom 3
+    ctx.fillStyle = '#92400E';
+    ctx.fillRect(64 - this.cameraX, 384 - this.cameraY, 32, 32);
+    
+    // Bedroom 4 (center back)
+    ctx.fillStyle = '#7C2D12'; // Different bed color
+    ctx.fillRect(288 - this.cameraX, 96 - this.cameraY, 64, 64);
+    ctx.fillStyle = '#FED7AA'; // Pillow
+    ctx.fillRect(292 - this.cameraX, 100 - this.cameraY, 24, 16);
+    ctx.fillStyle = '#FB923C'; // Blanket
+    ctx.fillRect(292 - this.cameraX, 120 - this.cameraY, 56, 36);
+    
+    // Dresser in bedroom 4
+    ctx.fillStyle = '#92400E';
+    ctx.fillRect(352 - this.cameraX, 160 - this.cameraY, 32, 32);
+    
+    
+    // ROOM LABELS
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('EXIT', 42 - this.cameraX, 209 - this.cameraY);
-    ctx.fillText('EXIT', 757 - this.cameraX, 209 - this.cameraY);
+    
+    // Living room label
+    ctx.fillText('LIVING ROOM', 320 - this.cameraX, 340 - this.cameraY);
+    
+    // Kitchen label
+    ctx.fillText('KITCHEN', 480 - this.cameraX, 340 - this.cameraY);
+    
+    // Refrigerator label
+    ctx.font = '8px sans-serif';
+    ctx.fillText('REFRIGERATOR', 432 - this.cameraX, 280 - this.cameraY);
+    
+    // Bedroom labels
+    ctx.font = '10px sans-serif';
+    ctx.fillText('BR1', 128 - this.cameraX, 140 - this.cameraY);
+    ctx.fillText('BR2', 512 - this.cameraX, 140 - this.cameraY);
+    ctx.fillText('BR3', 128 - this.cameraX, 360 - this.cameraY);
+    ctx.fillText('BR4', 320 - this.cameraX, 140 - this.cameraY);
+    
+    
+    // Add apartment features text
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('• 4 Private Bedrooms', 20 - this.cameraX, 50 - this.cameraY);
+    ctx.fillText('• Full Kitchen w/ Refrigerator', 20 - this.cameraX, 65 - this.cameraY);
+    ctx.fillText('• Spacious Living Room w/ TV', 20 - this.cameraX, 80 - this.cameraY);
+    
+    // Floor pattern for common areas
+    ctx.strokeStyle = '#E5E7EB';
+    ctx.lineWidth = 1;
+    for (let x = 224; x < 576; x += 16) {
+      for (let y = 224; y < 416; y += 16) {
+        if (x >= 224 && x <= 384 && y >= 288 && y <= 384) { // Living room area
+          ctx.strokeRect(x - this.cameraX, y - this.cameraY, 16, 16);
+        }
+      }
+    }
   }
 }
 
