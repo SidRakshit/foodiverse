@@ -84,22 +84,6 @@ class World implements Scene {
       ctx.fillStyle = '#FFD700';
       ctx.fillRect(0, boundaryY - 2, 800, 4);
       
-      // Area labels
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowOffsetX = 2;
-      ctx.shadowOffsetY = 2;
-      
-      if (boundaryY > 30) {
-        ctx.fillText('🏙️ DOWNTOWN BLACKSBURG', 400, boundaryY - 15);
-      }
-      if (boundaryY < 570) {
-        ctx.fillText('🏛️ VIRGINIA TECH CAMPUS', 400, boundaryY + 25);
-      }
-      
-      ctx.shadowColor = 'transparent';
     }
   }
 
