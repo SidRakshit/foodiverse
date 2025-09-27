@@ -4,7 +4,7 @@ import { SceneType } from '../types';
 interface OffCampusTile {
   type: 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'tree' | 'house' | 'apartment' | 'restaurant' | 'shop' | 'door' | 'floor' | 'wall' | 'furniture' | 'window' | 'stairs' | 'elevator';
   solid: boolean;
-  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'hotel' | 'downtown' | 'tots' | 'hokiehouse' | 'centros' | 'edge';
+  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'foodlion' | 'downtown' | 'tots' | 'hokiehouse' | 'centros' | 'edge';
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
 }
 
@@ -48,7 +48,7 @@ class NameBuildings extends BaseArea {
     this.createCommercialBuilding(world, 6, 6, 2, 2, 'shop'); // Shop
     this.createCommercialBuilding(world, 9, 6, 3, 2, 'hokiehouse'); // Hokie House
     this.createCommercialBuilding(world, 13, 6, 2, 2, 'shop'); // Another shop
-    this.createCommercialBuilding(world, 16, 6, 4, 2, 'hotel'); // Hotel
+    this.createCommercialBuilding(world, 16, 6, 4, 2, 'foodlion'); // FoodLion grocery store
 
     // Buildings on south side of Main Street
     this.createCommercialBuilding(world, 3, 11, 2, 2, 'gas_station'); // Gas station
@@ -241,6 +241,20 @@ class NameBuildings extends BaseArea {
     ctx.fillStyle = '#FF1493';
     ctx.fillText('💃', centrosX - 15 - this.cameraX, centrosY - 5 - this.cameraY);
     ctx.fillText('🕺', centrosX + 15 - this.cameraX, centrosY - 5 - this.cameraY);
+    
+    // FoodLion sign (building at x: 16-19, y: 6-7)
+    const foodlionX = 18 * this.tileSize; // Center of 4-tile wide building
+    const foodlionY = 6 * this.tileSize - 15; // Above the building
+    
+    // FoodLion sign background
+    ctx.fillStyle = '#2E86AB'; // FoodLion blue background
+    ctx.fillRect(foodlionX - 40 - this.cameraX, foodlionY - this.cameraY, 80, 12);
+    
+    // FoodLion text
+    ctx.fillStyle = '#FFFFFF'; // White text
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🦁 FOOD LION', foodlionX - this.cameraX, foodlionY + 8 - this.cameraY);
   }
 
   // Override tile rendering for off-campus styling
@@ -276,9 +290,9 @@ class NameBuildings extends BaseArea {
         baseColor = '#FFFF00'; // Bright for gas station
         accentColor = '#FF0000';
         break;
-      case 'hotel':
-        baseColor = '#DDA0DD'; // Purple for hotel
-        accentColor = '#8B008B';
+      case 'foodlion':
+        baseColor = '#2E86AB'; // FoodLion blue
+        accentColor = '#1F5F99'; // Darker blue accent
         break;
       default:
         baseColor = '#8B7355';

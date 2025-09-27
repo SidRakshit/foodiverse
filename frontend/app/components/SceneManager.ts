@@ -10,6 +10,7 @@ import TotsUpstairs from './off-campus/TotsUpstairs';
 import HokieHouseInterior from './off-campus/HokieHouseInterior';
 import CentrosInterior from './off-campus/CentrosInterior';
 import EdgeInterior from './off-campus/EdgeInterior';
+import FoodLionInterior from './off-campus/FoodLionInterior';
 import { Scene, SceneType } from './types';
 
 class SceneManager {
@@ -43,6 +44,9 @@ class SceneManager {
     
     // Off-campus apartment interiors
     this.scenes.set('edge', new EdgeInterior());
+    
+    // Off-campus commercial interiors
+    this.scenes.set('foodlion', new FoodLionInterior());
   }
 
   public getCurrentScene(): Scene {

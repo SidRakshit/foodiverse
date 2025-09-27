@@ -85,14 +85,6 @@ class GameEngine {
   }
 
   private renderUI(): void {
-    // Render simple UI elements
-    this.ctx.fillStyle = 'white';
-    this.ctx.font = '12px monospace';
-    this.ctx.fillText(`Position: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})`, 10, 20);
-    const cameraPos = this.sceneManager.getCameraPosition();
-    this.ctx.fillText(`Camera: (${Math.floor(cameraPos.x)}, ${Math.floor(cameraPos.y)})`, 10, 40);
-    this.ctx.fillText(`Scene: ${this.sceneManager.getCurrentSceneType()}`, 10, 60);
-    
     // Show entrance instructions when near door
     if (this.sceneManager.getCurrentSceneType() === 'campus') {
       this.ctx.fillStyle = '#FF8C00';
