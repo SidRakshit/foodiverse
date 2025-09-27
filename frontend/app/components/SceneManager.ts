@@ -1,5 +1,6 @@
 import Player from './Player';
 import World from './World';
+import InputHandler from './InputHandler';
 import BurrussInterior from './campus/BurrussInterior';
 import NewmanInterior from './campus/NewmanInterior';
 import TorgersenInterior from './campus/TorgersenInterior';
@@ -10,9 +11,11 @@ class SceneManager {
   private currentScene: Scene;
   private scenes: Map<SceneType, Scene> = new Map();
   private player: Player;
+  private inputHandler: InputHandler;
 
-  constructor(player: Player) {
+  constructor(player: Player, inputHandler: InputHandler) {
     this.player = player;
+    this.inputHandler = inputHandler;
     this.initializeScenes();
     this.currentScene = this.scenes.get('campus')!;
   }
@@ -44,22 +47,41 @@ class SceneManager {
       return;
     }
 
+    const oldSceneType = this.currentScene.type;
     this.currentScene = newScene;
 
     // Position player at entrance or default position
     if (entranceX !== undefined && entranceY !== undefined) {
       this.player.x = entranceX;
       this.player.y = entranceY;
+      console.log(`Switched from ${oldSceneType} to ${newSceneType} scene with position (${entranceX}, ${entranceY})`);
     } else if (newScene.getEntrancePosition) {
       const entrance = newScene.getEntrancePosition();
       this.player.x = entrance.x;
       this.player.y = entrance.y;
+      console.log(`Switched from ${oldSceneType} to ${newSceneType} scene with entrance position (${entrance.x}, ${entrance.y})`);
+    } else {
+      console.log(`Switched from ${oldSceneType} to ${newSceneType} scene - no position change`);
     }
-
-    console.log(`Switched to ${newSceneType} scene`);
   }
 
   public checkForSceneTransition(): void {
+    // Check for ESC key to exit buildings
+    const escPressed = this.inputHandler.wasKeyJustPressed('Escape');
+    
+    if (escPressed) {
+      const currentSceneType = this.currentScene.type;
+      console.log('ESC pressed! Current scene:', currentSceneType);
+      
+      if (currentSceneType !== 'campus') {
+        console.log('Exiting building to campus');
+        this.exitToOutside();
+        return;
+      } else {
+        console.log('Already on campus - ESC has no effect');
+      }
+    }
+
     // Check if player is near a door on campus
     if (this.currentScene.type === 'campus') {
       this.checkBuildingEntrance();
@@ -80,11 +102,17 @@ class SceneManager {
         const tileX = playerTileX + dx;
         const tileY = playerTileY + dy;
         
-        if (world.getTileAt && world.getTileAt(tileX, tileY)?.type === 'door') {
-          const buildingType = world.getTileAt(tileX, tileY)?.buildingType;
+        const tile = world.getTileAt && world.getTileAt(tileX, tileY);
+        if (tile && tile.type === 'door') {
+          const buildingType = tile.buildingType;
+          console.log('🚪 Found door! Building type:', buildingType, 'at tile:', {tileX, tileY});
+          
           if (buildingType && this.scenes.has(buildingType as SceneType)) {
+            console.log('✅ Entering building:', buildingType);
             this.switchScene(buildingType as SceneType);
             return;
+          } else {
+            console.log('❌ Building type not recognized:', buildingType, 'Available scenes:', Array.from(this.scenes.keys()));
           }
         }
       }
@@ -105,6 +133,13 @@ class SceneManager {
         this.switchScene(exitInfo.scene, exitInfo.x, exitInfo.y);
       }
     }
+  }
+
+  private exitToOutside(): void {
+    // Exit building and return to campus
+    // Position player at a default campus location
+    this.switchScene('campus', 400, 912); // Campus center
+    console.log('Exited building with ESC key');
   }
 
   public render(ctx: CanvasRenderingContext2D): void {

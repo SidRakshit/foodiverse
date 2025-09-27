@@ -17,6 +17,11 @@ class InputHandler {
   private handleKeyDown(event: KeyboardEvent): void {
     const key = event.code;
     
+    // Debug ESC key presses
+    if (key === 'Escape') {
+      console.log('🔑 ESC key detected in InputHandler');
+    }
+    
     // Prevent default behavior for game keys
     if (this.isGameKey(key)) {
       event.preventDefault();

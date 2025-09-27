@@ -19,8 +19,8 @@ class GameEngine {
     
     // Initialize game objects
     this.player = new Player(400, 912); // Starting position in campus area (608 + 304)
-    this.sceneManager = new SceneManager(this.player);
     this.inputHandler = new InputHandler();
+    this.sceneManager = new SceneManager(this.player, this.inputHandler);
     
     // Bind the game loop
     this.gameLoop = this.gameLoop.bind(this);
@@ -58,14 +58,14 @@ class GameEngine {
   }
 
   private update(deltaTime: number): void {
-    // Update input
+    // Check scene transitions BEFORE clearing input state
+    this.sceneManager.update(deltaTime);
+    
+    // Update input (this clears keyPressed state)
     this.inputHandler.update();
     
     // Update player
     this.player.update(deltaTime, this.inputHandler, this.sceneManager.getCurrentScene());
-    
-    // Update scene manager (handles scene transitions)
-    this.sceneManager.update(deltaTime);
   }
 
   private render(): void {
