@@ -156,11 +156,6 @@ class ApiService {
     });
   }
 
-  async completeItem(itemId: string): Promise<ApiResponse<any>> {
-    return this.makeRequest(`/listings/${itemId}/complete`, {
-      method: 'PUT',
-    });
-  }
 
   // Health check
   async ping(): Promise<boolean> {

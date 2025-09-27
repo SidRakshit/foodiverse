@@ -542,14 +542,14 @@ class Player {
       fridgeManager.selectNextItem();
     }
     
-    // Claim item with 'C' key (available to all users)
+    // Claim item with 'C' key (available to all users) - this now deletes the item
     if (inputHandler.wasKeyJustPressed('KeyC')) {
       const items = fridgeManager.getFridgeItemsSync(currentFridge);
       const selectedItem = items[fridgeManager.getSelectedItemIndex()];
       if (selectedItem && selectedItem.status === 'available' && !selectedItem.isLocalItem) {
-        fridgeManager.claimItem(selectedItem.id).then(success => {
+        fridgeManager.claimAndDeleteItem(selectedItem.id).then(success => {
           if (success) {
-            console.log('✅ Item claimed successfully');
+            console.log('🎉 Item claimed and taken successfully!');
           } else {
             console.log('❌ Failed to claim item');
           }
@@ -557,27 +557,18 @@ class Player {
       }
     }
     
-    // Complete item with 'X' key (available to all users)
-    if (inputHandler.wasKeyJustPressed('KeyX')) {
-      const items = fridgeManager.getFridgeItemsSync(currentFridge);
-      const selectedItem = items[fridgeManager.getSelectedItemIndex()];
-      if (selectedItem && selectedItem.status === 'claimed' && !selectedItem.isLocalItem) {
-        fridgeManager.completeItem(selectedItem.id).then(success => {
-          if (success) {
-            console.log('🎉 Item completed successfully - points awarded!');
-          } else {
-            console.log('❌ Failed to complete item');
-          }
-        });
-      }
-    }
+    const permissionLevel = fridgeManager.getPermissionLevel(currentFridge, this.playerId);
     
-    if (canModify) {
+    // Only allow adding items in player's own apartment
+    if (permissionLevel === 'owner') {
       // Add item with 'A' key - now opens input mode
       if (inputHandler.wasKeyJustPressed('KeyA')) {
         console.log('📝 Starting input mode for adding custom item...');
         fridgeManager.startInputMode('Enter food item name:');
       }
+    }
+    
+    if (canModify) {
       
       // Delete selected item with 'D' key
       if (inputHandler.wasKeyJustPressed('KeyD')) {

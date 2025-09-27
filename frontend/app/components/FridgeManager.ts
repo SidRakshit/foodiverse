@@ -48,6 +48,7 @@ class FridgeManager {
   private lastRefresh: Map<string, number> = new Map(); // Track last refresh time per fridge
   private refreshInterval: number = 30000; // 30 seconds
   private currentUser: string = 'player1'; // This should be set based on actual authentication
+  private playerApartment: string = 'edge'; // Which apartment the player lives in (edge or techterrace)
 
   static getInstance(): FridgeManager {
     if (!FridgeManager.instance) {
@@ -58,13 +59,14 @@ class FridgeManager {
 
   constructor() {
     this.initializeDefaultFridges();
+    this.determinePlayerApartment();
   }
 
   private initializeDefaultFridges(): void {
     // Initialize Edge apartment fridge
     this.fridgeData.set('edge', {
       apartmentId: 'edge-apartment-001',
-      residents: ['player1', 'roommate1', 'roommate2', 'roommate3'],
+      residents: ['player1'], // Only player1 lives here
       lastUpdated: new Date(),
       items: [
         {
@@ -99,7 +101,7 @@ class FridgeManager {
     // Initialize Tech Terrace apartment fridge
     this.fridgeData.set('techterrace', {
       apartmentId: 'techterrace-apartment-001',
-      residents: ['player1', 'roommate1', 'roommate2', 'roommate3'],
+      residents: ['roommate1', 'roommate2', 'roommate3'], // Other people live here
       lastUpdated: new Date(),
       items: [
         {
@@ -158,6 +160,43 @@ class FridgeManager {
   public canPlayerModify(fridgeId: string, playerId: string): boolean {
     const fridge = this.fridgeData.get(fridgeId);
     return fridge ? fridge.residents.includes(playerId) : false;
+  }
+
+  // Check if player owns this apartment (lives here)
+  public isPlayerApartment(fridgeId: string): boolean {
+    return fridgeId === this.playerApartment;
+  }
+
+  // Get permission level for display
+  public getPermissionLevel(fridgeId: string, playerId: string): 'owner' | 'resident' | 'visitor' {
+    if (this.isPlayerApartment(fridgeId)) {
+      return 'owner';
+    }
+    
+    const fridge = this.fridgeData.get(fridgeId);
+    if (fridge && fridge.residents.includes(playerId)) {
+      return 'resident';
+    }
+    
+    return 'visitor';
+  }
+
+  // Set which apartment the player lives in
+  public setPlayerApartment(apartmentId: string): void {
+    this.playerApartment = apartmentId;
+    console.log(`🏠 Player apartment set to: ${apartmentId}`);
+  }
+
+  // Determine player's apartment based on game state or preferences
+  private determinePlayerApartment(): void {
+    // For now, default to Edge apartment
+    // In a full game, this could be determined by:
+    // - Save game data
+    // - Player selection
+    // - Story progression
+    // - etc.
+    this.playerApartment = 'edge';
+    console.log(`🏠 Player lives in: ${this.playerApartment} apartment`);
   }
 
   // UI State Management
@@ -328,11 +367,21 @@ class FridgeManager {
     ctx.fillText('×', uiX + uiWidth - 20, uiY + 25);
     
     // Permission indicator
-    // Permission and connection status
-    ctx.fillStyle = canModify ? '#27AE60' : '#F39C12';
+    const permissionLevel = this.getPermissionLevel(fridgeId, playerId);
+    let permissionColor = '#F39C12'; // Default orange for visitor
+    let permissionText = '👁 Visitor (view only)';
+    
+    if (permissionLevel === 'owner') {
+      permissionColor = '#27AE60'; // Green for owner
+      permissionText = '🏠 Your Apartment (full access)';
+    } else if (permissionLevel === 'resident') {
+      permissionColor = '#3498DB'; // Blue for resident
+      permissionText = '🔑 Resident (can modify)';
+    }
+    
+    ctx.fillStyle = permissionColor;
     ctx.font = '12px Arial';
     ctx.textAlign = 'left';
-    const permissionText = canModify ? '✓ Resident (can modify)' : '👁 Visitor (view only)';
     ctx.fillText(permissionText, uiX + 10, uiY + 60);
     
     // Connection status
@@ -365,15 +414,26 @@ class FridgeManager {
     // Input mode instructions or regular instructions
     if (this.uiState.isInputMode) {
       ctx.fillText('Type food item name, press ENTER to add, ESC to cancel', uiX + uiWidth / 2, uiY + uiHeight - 10);
-    } else if (canModify) {
-      const instructions = isOnline 
-        ? 'Press A to add item, D to delete selected item, C to claim, X to complete, R to refresh, ↑↓ to navigate, ESC to close'
-        : 'Press A to add local item, D to delete item, R to retry connection, ↑↓ to navigate, ESC to close';
-      ctx.fillText(instructions, uiX + uiWidth / 2, uiY + uiHeight - 10);
     } else {
-      const instructions = isOnline 
-        ? 'Press C to claim items, X to complete, R to refresh, ESC to close'
-        : 'Press R to retry connection, ESC to close';
+      let instructions = '';
+      
+      if (permissionLevel === 'owner') {
+        // Full access - can add, delete, claim
+        instructions = isOnline 
+          ? 'Press A to add item, D to delete selected item, C to claim item, R to refresh, ↑↓ to navigate, ESC to close'
+          : 'Press A to add local item, D to delete item, R to retry connection, ↑↓ to navigate, ESC to close';
+      } else if (permissionLevel === 'resident') {
+        // Can modify but not add items (not their apartment)
+        instructions = isOnline 
+          ? 'Press D to delete selected item, C to claim item, R to refresh, ↑↓ to navigate, ESC to close'
+          : 'Press D to delete item, R to retry connection, ↑↓ to navigate, ESC to close';
+      } else {
+        // Visitor - can only claim
+        instructions = isOnline 
+          ? 'Press C to claim item, R to refresh, ↑↓ to navigate, ESC to close'
+          : 'Press R to retry connection, ↑↓ to navigate, ESC to close';
+      }
+      
       ctx.fillText(instructions, uiX + uiWidth / 2, uiY + uiHeight - 10);
     }
     
@@ -750,15 +810,16 @@ class FridgeManager {
   }
 
   // Additional database operations
-  public async claimItem(itemId: string): Promise<boolean> {
+  public async claimAndDeleteItem(itemId: string): Promise<boolean> {
     try {
+      // For database items, claim them (which now deletes them automatically)
       const response = await apiService.claimItem(itemId);
       if (response.error) {
         console.error('Failed to claim item:', response.error);
         return false;
       }
       
-      // Refresh current fridge data
+      // Refresh current fridge data to show the item is gone
       if (this.uiState.currentFridge) {
         await this.refreshFridgeData(this.uiState.currentFridge);
       }
@@ -766,26 +827,6 @@ class FridgeManager {
       return true;
     } catch (error) {
       console.error('Error claiming item:', error);
-      return false;
-    }
-  }
-
-  public async completeItem(itemId: string): Promise<boolean> {
-    try {
-      const response = await apiService.completeItem(itemId);
-      if (response.error) {
-        console.error('Failed to complete item:', response.error);
-        return false;
-      }
-      
-      // Refresh current fridge data
-      if (this.uiState.currentFridge) {
-        await this.refreshFridgeData(this.uiState.currentFridge);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error completing item:', error);
       return false;
     }
   }
