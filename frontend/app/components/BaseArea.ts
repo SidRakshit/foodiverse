@@ -2,7 +2,7 @@ import Player from './Player';
 import { Scene, SceneType } from './types';
 
 interface AreaTile {
-  type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'stone' | 'water' | 'tree' | 'sand' | 'flower' | 'path' | 'bench' | 'fountain';
+  type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'stone' | 'water' | 'tree' | 'sand' | 'flower' | 'path' | 'bench' | 'fountain' | 'house' | 'apartment' | 'restaurant' | 'shop';
   solid: boolean;
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
   buildingType?: string;
@@ -153,6 +153,18 @@ abstract class BaseArea implements Scene {
         break;
       case 'sand':
         this.renderSandTile(ctx, x, y);
+        break;
+      case 'house':
+        this.renderHouseTile(ctx, tile, x, y);
+        break;
+      case 'apartment':
+        this.renderApartmentTile(ctx, tile, x, y);
+        break;
+      case 'restaurant':
+        this.renderRestaurantTile(ctx, tile, x, y);
+        break;
+      case 'shop':
+        this.renderShopTile(ctx, tile, x, y);
         break;
     }
   }
@@ -306,6 +318,45 @@ abstract class BaseArea implements Scene {
       const py = y + Math.floor(Math.random() * this.tileSize);
       ctx.fillRect(px, py, 1, 1);
     }
+  }
+
+  protected renderHouseTile(ctx: CanvasRenderingContext2D, tile: AreaTile, x: number, y: number): void {
+    // House building
+    ctx.fillStyle = '#D2691E';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Roof
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(x, y, this.tileSize, 8);
+  }
+
+  protected renderApartmentTile(ctx: CanvasRenderingContext2D, tile: AreaTile, x: number, y: number): void {
+    // Apartment building
+    ctx.fillStyle = '#708090';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Windows
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(x + 4, y + 4, 6, 6);
+    ctx.fillRect(x + 22, y + 4, 6, 6);
+    ctx.fillRect(x + 4, y + 22, 6, 6);
+    ctx.fillRect(x + 22, y + 22, 6, 6);
+  }
+
+  protected renderRestaurantTile(ctx: CanvasRenderingContext2D, tile: AreaTile, x: number, y: number): void {
+    // Restaurant building
+    ctx.fillStyle = '#CD853F';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Sign
+    ctx.fillStyle = '#FF6347';
+    ctx.fillRect(x + 8, y + 4, 16, 8);
+  }
+
+  protected renderShopTile(ctx: CanvasRenderingContext2D, tile: AreaTile, x: number, y: number): void {
+    // Shop building
+    ctx.fillStyle = '#DDA0DD';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    // Store front
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(x + 4, y + 16, 24, 12);
   }
 
   public getEntrancePosition(): { x: number, y: number } {

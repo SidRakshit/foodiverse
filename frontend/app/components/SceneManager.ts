@@ -5,6 +5,10 @@ import BurrussInterior from './campus/BurrussInterior';
 import NewmanInterior from './campus/NewmanInterior';
 import TorgersenInterior from './campus/TorgersenInterior';
 import SquiresInterior from './campus/SquiresInterior';
+import TotsInterior from './off-campus/TotsInterior';
+import TotsUpstairs from './off-campus/TotsUpstairs';
+import HokieHouseInterior from './off-campus/HokieHouseInterior';
+import CentrosInterior from './off-campus/CentrosInterior';
 import { Scene, SceneType } from './types';
 
 class SceneManager {
@@ -24,12 +28,17 @@ class SceneManager {
     // Campus (outdoor world)
     this.scenes.set('campus', new World());
     
-    // Building interiors
+    // Campus building interiors
     this.scenes.set('burruss', new BurrussInterior());
     this.scenes.set('newman', new NewmanInterior());
     this.scenes.set('torgersen', new TorgersenInterior());
     this.scenes.set('squires', new SquiresInterior());
-    // Add more building interiors as needed
+    
+    // Off-campus restaurant interiors
+    this.scenes.set('tots', new TotsInterior());
+    this.scenes.set('tots_upstairs', new TotsUpstairs());
+    this.scenes.set('hokiehouse', new HokieHouseInterior());
+    this.scenes.set('centros', new CentrosInterior());
   }
 
   public getCurrentScene(): Scene {
@@ -88,6 +97,8 @@ class SceneManager {
     } else {
       // Check if player is near exit in building
       this.checkBuildingExit();
+      // Check for stair transitions in buildings
+      this.checkStairTransition();
     }
   }
 
@@ -108,6 +119,35 @@ class SceneManager {
         return;
       } else {
         console.log('❌ Building type not recognized:', buildingType, 'Available scenes:', Array.from(this.scenes.keys()));
+      }
+    }
+  }
+
+  private checkStairTransition(): void {
+    // Check if player is on stairs in any building
+    const currentScene = this.currentScene as any;
+    if (currentScene.tiles) {
+      const playerTileX = Math.floor(this.player.x / 32);
+      const playerTileY = Math.floor(this.player.y / 32);
+      
+      // Check bounds
+      if (playerTileX >= 0 && playerTileX < (currentScene.buildingWidth || currentScene.areaWidth) &&
+          playerTileY >= 0 && playerTileY < (currentScene.buildingHeight || currentScene.areaHeight)) {
+        
+        const tile = currentScene.tiles[playerTileY] && currentScene.tiles[playerTileY][playerTileX];
+        
+        if (tile && tile.type === 'stairs') {
+          console.log('🪜 Found stairs! Current scene:', this.currentScene.type);
+          
+          // Handle specific stair transitions
+          if (this.currentScene.type === 'tots') {
+            console.log('✅ Going upstairs to tots_upstairs');
+            this.switchScene('tots_upstairs');
+          } else if (this.currentScene.type === 'tots_upstairs') {
+            console.log('✅ Going downstairs to tots');
+            this.switchScene('tots');
+          }
+        }
       }
     }
   }
