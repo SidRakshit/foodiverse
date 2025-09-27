@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import GameEngine from './GameEngine';
 
+const backendConfig = {
+  baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8080',
+  email: process.env.NEXT_PUBLIC_TEST_EMAIL ?? 'tester@example.com',
+  password: process.env.NEXT_PUBLIC_TEST_PASSWORD ?? 'Secret123!',
+};
+
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameEngineRef = useRef<GameEngine | null>(null);
@@ -22,7 +28,7 @@ const Game: React.FC = () => {
         ctx.imageSmoothingEnabled = false;
         
         // Initialize game engine
-        gameEngineRef.current = new GameEngine(canvas, ctx);
+        gameEngineRef.current = new GameEngine(canvas, ctx, backendConfig);
         gameEngineRef.current.start();
         setIsLoaded(true);
         

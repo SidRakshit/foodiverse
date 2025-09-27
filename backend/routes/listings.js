@@ -4,6 +4,7 @@ const fs = require("fs");
 const multer = require("multer");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { createClient } = require("@supabase/supabase-js");
+const path = require("path");
 const pool = require("../db");
 
 const router = express.Router();
@@ -35,7 +36,7 @@ function authMiddleware(req, res, next) {
 
 /* ---------- helpers ---------- */
 async function identifyFoodFromFile(filePath) {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
   const prompt = "Identify the food item in this picture. Reply with just the food name.";
   const image = fs.readFileSync(filePath);
   const result = await model.generateContent([
@@ -94,6 +95,38 @@ router.post("/photo", authMiddleware, upload.single("photo"), async (req, res) =
     res.status(500).json({ error: "Upload or Gemini failed" });
   } finally {
     try { fs.unlinkSync(tmpPath); } catch {}
+  }
+});
+
+router.post("/photo/sample", authMiddleware, async (req, res) => {
+  const samplePath = path.resolve(__dirname, "../../images/Eggs.jpg");
+  try {
+    if (!fs.existsSync(samplePath)) {
+      return res.status(404).json({ error: "Sample image not found" });
+    }
+
+    const location = req.body?.location || "Campus Pickup";
+    const item_name = (await identifyFoodFromFile(samplePath)) || "Unknown Item";
+
+    const storagePath = `${req.user.id}/${Date.now()}_Eggs.jpg`;
+    const fileBuffer = fs.readFileSync(samplePath);
+    const { error: upErr } = await supabase
+      .storage
+      .from("photos")
+      .upload(storagePath, fileBuffer, { contentType: "image/jpeg", upsert: true });
+    if (upErr) throw upErr;
+
+    const { data: pub } = supabase.storage.from("photos").getPublicUrl(storagePath);
+    const photoUrl = pub.publicUrl;
+
+    const q = `INSERT INTO listings (user_id, item_name, photo_url, location)
+               VALUES ($1,$2,$3,$4) RETURNING *`;
+    const result = await pool.query(q, [req.user.id, item_name, photoUrl, location]);
+
+    res.json({ listing: result.rows[0], item_name, photoUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Sample upload or Gemini failed" });
   }
 });
 
