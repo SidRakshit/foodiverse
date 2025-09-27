@@ -28,11 +28,11 @@ class CampusArea extends BaseArea {
   }
 
   private generateCampusBuildings(world: any[][]): void {
-    // Burruss Hall (iconic admin building with clock tower)
-    this.createBuilding(world, 10, 2, 5, 4, 'burruss');
+    // Burruss Hall (iconic admin building with twin towers)
+    this.createBurrussHall(world, 9, 1, 6, 6);
     
-    // Newman Library
-    this.createBuilding(world, 3, 2, 5, 4, 'newman');
+    // Turner Library
+    this.createBuilding(world, 3, 2, 5, 4, 'turner');
     
     // Torgersen Hall (Engineering) - Large Gothic Revival building with bridge
     this.createTorgersenHall(world, 16, 1, 8, 5);
@@ -64,6 +64,69 @@ class CampusArea extends BaseArea {
             world[by][bx] = { type: 'building', solid: true, buildingType };
           }
         }
+      }
+    }
+  }
+
+  private createBurrussHall(world: any[][], x: number, y: number, width: number, height: number): void {
+    // Create Burruss Hall with twin towers and Gothic Revival architecture
+    
+    for (let by = y; by < y + height; by++) {
+      for (let bx = x; bx < x + width; bx++) {
+        if (bx < this.areaWidth && by < this.areaHeight) {
+          // Left tower (2 tiles wide, full height + 1 extra for tower top)
+          if (bx >= x && bx <= x + 1) {
+            if (by === y + height - 1 && bx === x) {
+              // Side entrance to left tower
+              world[by][bx] = { type: 'door', solid: false, buildingType: 'burruss' };
+            } else {
+              world[by][bx] = { type: 'building', solid: true, buildingType: 'burruss', part: 'left_tower' };
+            }
+          }
+          // Right tower (2 tiles wide, full height + 1 extra for tower top)
+          else if (bx >= x + width - 2 && bx <= x + width - 1) {
+            if (by === y + height - 1 && bx === x + width - 1) {
+              // Side entrance to right tower
+              world[by][bx] = { type: 'door', solid: false, buildingType: 'burruss' };
+            } else {
+              world[by][bx] = { type: 'building', solid: true, buildingType: 'burruss', part: 'right_tower' };
+            }
+          }
+          // Central building connecting the towers
+          else if (bx >= x + 2 && bx <= x + width - 3) {
+            // Main entrance in center of building
+            if (by === y + height - 1 && bx === x + Math.floor(width / 2)) {
+              world[by][bx] = { type: 'door', solid: false, buildingType: 'burruss' };
+            }
+            // Upper central building (shorter than towers)
+            else if (by >= y + 1 && by <= y + height - 2) {
+              world[by][bx] = { type: 'building', solid: true, buildingType: 'burruss', part: 'center' };
+            }
+            // Open courtyard area at ground level between towers
+            else {
+              world[by][bx] = { type: 'grass', solid: false };
+            }
+          }
+        }
+      }
+    }
+
+    // Add tower tops (crenellations) - extend towers one tile higher
+    if (y > 0) {
+      // Left tower top
+      if (x < this.areaWidth && y - 1 < this.areaHeight) {
+        world[y - 1][x] = { type: 'building', solid: true, buildingType: 'burruss', part: 'left_tower_top' };
+      }
+      if (x + 1 < this.areaWidth && y - 1 < this.areaHeight) {
+        world[y - 1][x + 1] = { type: 'building', solid: true, buildingType: 'burruss', part: 'left_tower_top' };
+      }
+      
+      // Right tower top
+      if (x + width - 2 < this.areaWidth && y - 1 < this.areaHeight) {
+        world[y - 1][x + width - 2] = { type: 'building', solid: true, buildingType: 'burruss', part: 'right_tower_top' };
+      }
+      if (x + width - 1 < this.areaWidth && y - 1 < this.areaHeight) {
+        world[y - 1][x + width - 1] = { type: 'building', solid: true, buildingType: 'burruss', part: 'right_tower_top' };
       }
     }
   }
@@ -148,7 +211,7 @@ class CampusArea extends BaseArea {
 
     // Connecting paths to buildings
     this.createPathToDoor(world, 5, 6, 'horizontal'); // To library
-    this.createPathToDoor(world, 11, 5, 'horizontal'); // To admin
+    this.createPathToDoor(world, 11, 6, 'horizontal'); // To Burruss Hall
     this.createPathToDoor(world, 14, 9, 'vertical'); // To classroom
     this.createPathToDoor(world, 19, 9, 'vertical'); // To classroom
   }
@@ -190,7 +253,7 @@ class CampusArea extends BaseArea {
     
     // Add flowers around buildings
     this.addFlowersAroundBuilding(world, 3, 2, 5, 4); // Around library
-    this.addFlowersAroundBuilding(world, 9, 2, 4, 3); // Around admin
+    this.addFlowersAroundBuilding(world, 9, 1, 6, 6); // Around Burruss Hall
   }
 
   private addTrees(world: any[][], centerX: number, centerY: number, count: number): void {
@@ -270,7 +333,7 @@ class CampusArea extends BaseArea {
         baseColor = '#D4B896';
         accentColor = '#8B0000';
         break;
-      case 'newman':
+      case 'turner':
         baseColor = '#C4A484';
         accentColor = '#FF8C00';
         break;
@@ -283,9 +346,11 @@ class CampusArea extends BaseArea {
         accentColor = '#8B0000';
     }
     
-    // Specialized rendering for Torgersen Hall
+    // Specialized rendering for different building types
     if (buildingType === 'torgersen') {
       this.renderTorgersenTile(ctx, x, y, baseColor, accentColor);
+    } else if (buildingType === 'burruss') {
+      this.renderBurrussTile(ctx, tile, x, y, baseColor, accentColor);
     } else {
       // Main building structure for other buildings
       ctx.fillStyle = baseColor;
@@ -353,6 +418,154 @@ class CampusArea extends BaseArea {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(x + this.tileSize - 2, y, 2, this.tileSize);
     ctx.fillRect(x, y + this.tileSize - 2, this.tileSize, 2);
+  }
+
+  private renderBurrussTile(ctx: CanvasRenderingContext2D, tile: any, x: number, y: number, baseColor: string, accentColor: string): void {
+    const part = tile.part || 'center';
+    
+    // Base limestone color for Burruss Hall
+    ctx.fillStyle = '#E8DCC6'; // Light limestone like in the image
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    // Different rendering based on building part
+    switch (part) {
+      case 'left_tower':
+      case 'right_tower':
+        this.renderBurrussTower(ctx, x, y, part);
+        break;
+      case 'left_tower_top':
+      case 'right_tower_top':
+        this.renderBurrussTowerTop(ctx, x, y, part);
+        break;
+      case 'center':
+        this.renderBurrussCenter(ctx, x, y);
+        break;
+      default:
+        // Default building tile
+        this.renderBurrussDefault(ctx, x, y);
+        break;
+    }
+  }
+
+  private renderBurrussTower(ctx: CanvasRenderingContext2D, x: number, y: number, part: string): void {
+    // Tower base
+    ctx.fillStyle = '#E8DCC6'; // Light limestone
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    // Stone block pattern
+    ctx.fillStyle = '#F5F0E8'; // Lighter highlight
+    ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+    
+    // Gothic arched windows
+    if ((y % (this.tileSize * 2)) === 0) {
+      ctx.fillStyle = '#2F2F2F'; // Dark window frame
+      ctx.fillRect(x + 4, y + 6, this.tileSize - 8, this.tileSize - 8);
+      
+      // Window glass with Gothic arch
+      ctx.fillStyle = '#4A90E2'; // Blue glass
+      ctx.beginPath();
+      ctx.arc(x + this.tileSize / 2, y + this.tileSize - 4, 4, Math.PI, 0);
+      ctx.fill();
+    }
+    
+    // Stone courses (horizontal lines)
+    ctx.strokeStyle = '#D4C4A8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + this.tileSize / 3);
+    ctx.lineTo(x + this.tileSize, y + this.tileSize / 3);
+    ctx.moveTo(x, y + (2 * this.tileSize) / 3);
+    ctx.lineTo(x + this.tileSize, y + (2 * this.tileSize) / 3);
+    ctx.stroke();
+    
+    // Vertical stone joints
+    ctx.beginPath();
+    ctx.moveTo(x + this.tileSize / 2, y);
+    ctx.lineTo(x + this.tileSize / 2, y + this.tileSize);
+    ctx.stroke();
+    
+    // Tower shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(x + this.tileSize - 3, y, 3, this.tileSize);
+  }
+
+  private renderBurrussTowerTop(ctx: CanvasRenderingContext2D, x: number, y: number, part: string): void {
+    // Crenellated tower top (castle battlements)
+    ctx.fillStyle = '#E8DCC6';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    // Crenellation pattern (merlons and crenels)
+    ctx.fillStyle = '#F5F0E8';
+    const crenelWidth = this.tileSize / 4;
+    for (let i = 0; i < 4; i++) {
+      if (i % 2 === 0) { // Merlons (raised parts)
+        ctx.fillRect(x + i * crenelWidth, y, crenelWidth, this.tileSize * 0.7);
+      }
+    }
+    
+    // Flag pole on one tower
+    if (part === 'left_tower_top') {
+      ctx.fillStyle = '#8B4513'; // Brown pole
+      ctx.fillRect(x + this.tileSize / 2 - 1, y, 2, this.tileSize);
+      
+      // Virginia Tech flag
+      ctx.fillStyle = '#630031'; // Maroon
+      ctx.fillRect(x + this.tileSize / 2 + 1, y + 2, 6, 4);
+      ctx.fillStyle = '#FF8C00'; // Orange
+      ctx.fillRect(x + this.tileSize / 2 + 1, y + 6, 6, 2);
+    }
+    
+    // Stone detail
+    ctx.strokeStyle = '#D4C4A8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, this.tileSize, this.tileSize);
+  }
+
+  private renderBurrussCenter(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Central building connecting towers
+    ctx.fillStyle = '#E8DCC6';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    // Central Gothic arch detail
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+    
+    // Gothic arched detail
+    ctx.fillStyle = '#2F2F2F';
+    ctx.beginPath();
+    ctx.arc(x + this.tileSize / 2, y + this.tileSize - 2, 6, Math.PI, 0);
+    ctx.fill();
+    
+    // Window glass
+    ctx.fillStyle = '#4A90E2';
+    ctx.beginPath();
+    ctx.arc(x + this.tileSize / 2, y + this.tileSize - 2, 4, Math.PI, 0);
+    ctx.fill();
+    
+    // Decorative stonework
+    ctx.strokeStyle = '#D4C4A8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, this.tileSize, this.tileSize);
+    
+    // Horizontal course lines
+    ctx.beginPath();
+    ctx.moveTo(x, y + this.tileSize / 2);
+    ctx.lineTo(x + this.tileSize, y + this.tileSize / 2);
+    ctx.stroke();
+  }
+
+  private renderBurrussDefault(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Default Burruss stone pattern
+    ctx.fillStyle = '#E8DCC6';
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(x + 1, y + 1, this.tileSize - 2, this.tileSize - 2);
+    
+    // Stone texture
+    ctx.strokeStyle = '#D4C4A8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, this.tileSize, this.tileSize);
   }
 }
 
