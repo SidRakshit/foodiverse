@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -6,7 +8,6 @@ const authRoutes = require("./routes/auth");
 const listingsRoutes = require("./routes/listings");
 const leaderboardRoutes = require("./routes/leaderboard");
 const recipeRoutes = require("./routes/recipes");
-
 
 dotenv.config();
 
@@ -28,8 +29,8 @@ app.get("/db-test", async (req, res) => {
     const result = await pool.query("SELECT NOW()");
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Database error");
+    console.error("❌ DB error details:", err.message);   // print cause
+    res.status(500).json({ error: err.message });         // send back reason
   }
 });
 
