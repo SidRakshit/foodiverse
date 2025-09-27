@@ -35,7 +35,7 @@ function authMiddleware(req, res, next) {
 
 /* ---------- helpers ---------- */
 async function identifyFoodFromFile(filePath) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   const prompt = "Identify the food item in this picture. Reply with just the food name.";
   const image = fs.readFileSync(filePath);
   const result = await model.generateContent([

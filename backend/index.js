@@ -18,9 +18,6 @@ app.use("/listings", listingsRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/recipes", recipeRoutes);
 
-
-
-
 app.get("/", (req, res) => {
   res.send("Foodiverse backend is running...");
 });

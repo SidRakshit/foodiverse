@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Identify food from image URL
 async function identifyFoodFromImage(imageUrl) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = "Identify the food item in this picture. Reply with just the food name.";
     const result = await model.generateContent([
