@@ -31,26 +31,20 @@ class CampusArea extends BaseArea {
     // Burruss Hall (iconic admin building with twin towers)
     this.createBurrussHall(world, 9, 1, 6, 6);
     
-    // Turner Library
+    // Turner Place
     this.createBuilding(world, 3, 2, 5, 4, 'turner');
     
     // Torgersen Hall (Engineering) - Large Gothic Revival building with bridge
     this.createTorgersenHall(world, 16, 1, 8, 5);
     
-    // War Memorial Chapel
-    this.createBuilding(world, 5, 8, 3, 3, 'war_memorial');
-    
-    // Squires Student Center
-    this.createBuilding(world, 12, 8, 5, 4, 'squires');
-    
-    // Owens Hall (Dining)
+    // Prichard Hall (Dining)
     this.createBuilding(world, 1, 13, 6, 4, 'owens');
     
     // Cassell Coliseum
     this.createBuilding(world, 18, 12, 6, 5, 'cassell');
     
-    // Create the Drillfield (large open grass area)
-    this.createDrillfield(world, 8, 14, 8, 4);
+    // Create the Drillfield (huge oval-shaped grass area in center of campus)
+    this.createDrillfield(world, 7, 7, 11, 8);
   }
 
   private createBuilding(world: any[][], x: number, y: number, width: number, height: number, buildingType: string): void {
@@ -178,33 +172,47 @@ class CampusArea extends BaseArea {
   }
 
   private createDrillfield(world: any[][], x: number, y: number, width: number, height: number): void {
+    // Create an oval/elliptical shape for the Drillfield
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const radiusX = (width / 2) - 0.2; // Slightly reduce horizontal radius to make left edge cleaner
+    const radiusY = height / 2;
+    
     for (let dy = y; dy < y + height && dy < this.areaHeight; dy++) {
       for (let dx = x; dx < x + width && dx < this.areaWidth; dx++) {
-        world[dy][dx] = { type: 'grass', solid: false, buildingType: 'drillfield' };
+        // Calculate distance from center using ellipse formula
+        const distanceFromCenterX = (dx - centerX) / radiusX;
+        const distanceFromCenterY = (dy - centerY) / radiusY;
+        const ellipseDistance = (distanceFromCenterX * distanceFromCenterX) + (distanceFromCenterY * distanceFromCenterY);
+        
+        // If point is within the ellipse (distance <= 1), make it drillfield
+        if (ellipseDistance <= 1.0) {
+          world[dy][dx] = { type: 'grass', solid: false, buildingType: 'drillfield' };
+        }
       }
     }
   }
 
   private generateCampusPaths(world: any[][]): void {
-    // Main campus walkway (horizontal)
+    // Main campus walkway (horizontal) - avoid drillfield area
     for (let x = 0; x < this.areaWidth; x++) {
-      if (world[9][x].type === 'grass') {
+      if (world[9][x].type === 'grass' && world[9][x].buildingType !== 'drillfield') {
         world[9][x] = { type: 'path', solid: false };
       }
     }
     
-    // Vertical paths connecting buildings
+    // Vertical paths connecting buildings - avoid drillfield area
     for (let y = 0; y < this.areaHeight; y++) {
       // Path near library
-      if (world[y][5] && world[y][5].type === 'grass') {
+      if (world[y][5] && world[y][5].type === 'grass' && world[y][5].buildingType !== 'drillfield') {
         world[y][5] = { type: 'path', solid: false };
       }
-      // Path in center
-      if (world[y][12] && world[y][12].type === 'grass') {
+      // Path in center - avoid drillfield
+      if (world[y][12] && world[y][12].type === 'grass' && world[y][12].buildingType !== 'drillfield') {
         world[y][12] = { type: 'path', solid: false };
       }
       // Path on right side
-      if (world[y][19] && world[y][19].type === 'grass') {
+      if (world[y][19] && world[y][19].type === 'grass' && world[y][19].buildingType !== 'drillfield') {
         world[y][19] = { type: 'path', solid: false };
       }
     }
@@ -219,13 +227,13 @@ class CampusArea extends BaseArea {
   private createPathToDoor(world: any[][], startX: number, startY: number, direction: 'horizontal' | 'vertical'): void {
     if (direction === 'horizontal') {
       for (let x = startX; x < startX + 3; x++) {
-        if (x < this.areaWidth && world[startY][x].type === 'grass') {
+        if (x < this.areaWidth && world[startY][x].type === 'grass' && world[startY][x].buildingType !== 'drillfield') {
           world[startY][x] = { type: 'path', solid: false };
         }
       }
     } else {
       for (let y = startY; y < startY + 3; y++) {
-        if (y < this.areaHeight && world[y][startX].type === 'grass') {
+        if (y < this.areaHeight && world[y][startX].type === 'grass' && world[y][startX].buildingType !== 'drillfield') {
           world[y][startX] = { type: 'path', solid: false };
         }
       }
@@ -322,6 +330,17 @@ class CampusArea extends BaseArea {
   }
 
   // Override tile rendering for campus-specific styling
+  protected renderTile(ctx: CanvasRenderingContext2D, tile: any, x: number, y: number): void {
+    // Special rendering for drillfield
+    if (tile.type === 'grass' && tile.buildingType === 'drillfield') {
+      this.renderDrillfieldTile(ctx, x, y);
+      return;
+    }
+    
+    // Default tile rendering
+    super.renderTile(ctx, tile, x, y);
+  }
+
   protected renderBuildingTile(ctx: CanvasRenderingContext2D, tile: any, x: number, y: number): void {
     // Virginia Tech's signature Hokie Stone buildings
     const buildingType = tile.buildingType;
@@ -589,19 +608,19 @@ class CampusArea extends BaseArea {
     ctx.textAlign = 'center';
     ctx.fillText('BURRUSS HALL', burrussX - this.cameraX, burrussY + 8 - this.cameraY);
     
-    // Turner Library sign (building at x: 3-7, y: 2-5)
+    // Turner Place sign (building at x: 3-7, y: 2-5)
     const turnerX = 5.5 * this.tileSize; // Center of 5-tile wide building
     const turnerY = 2 * this.tileSize - 15; // Above the building
     
     // Turner sign background
     ctx.fillStyle = '#2E4057'; // Academic blue background
-    ctx.fillRect(turnerX - 40 - this.cameraX, turnerY - this.cameraY, 80, 12);
+    ctx.fillRect(turnerX - 35 - this.cameraX, turnerY - this.cameraY, 70, 12);
     
     // Turner text
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('TURNER LIBRARY', turnerX - this.cameraX, turnerY + 8 - this.cameraY);
+    ctx.fillText('TURNER PLACE', turnerX - this.cameraX, turnerY + 8 - this.cameraY);
     
     // Torgersen Hall sign (building at x: 16-23, y: 1-5)
     const torgersenX = 20 * this.tileSize; // Center of 8-tile wide building
@@ -617,47 +636,19 @@ class CampusArea extends BaseArea {
     ctx.textAlign = 'center';
     ctx.fillText('TORGERSEN HALL', torgersenX - this.cameraX, torgersenY + 8 - this.cameraY);
     
-    // War Memorial Chapel sign (building at x: 5-7, y: 8-10)
-    const chapelX = 6.5 * this.tileSize; // Center of 3-tile wide building
-    const chapelY = 8 * this.tileSize - 15; // Above the building
+    // Prichard Hall sign (building at x: 1-6, y: 13-16)
+    const prichardX = 4 * this.tileSize; // Center of 6-tile wide building
+    const prichardY = 13 * this.tileSize - 15; // Above the building
     
-    // Chapel sign background
-    ctx.fillStyle = '#4A4A4A'; // Solemn gray background
-    ctx.fillRect(chapelX - 45 - this.cameraX, chapelY - this.cameraY, 90, 12);
-    
-    // Chapel text
-    ctx.fillStyle = '#F7FAFC'; // Light text
-    ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('WAR MEMORIAL CHAPEL', chapelX - this.cameraX, chapelY + 8 - this.cameraY);
-    
-    // Squires Student Center sign (building at x: 12-16, y: 8-11)
-    const squiresX = 14.5 * this.tileSize; // Center of 5-tile wide building
-    const squiresY = 8 * this.tileSize - 15; // Above the building
-    
-    // Squires sign background
-    ctx.fillStyle = '#38A169'; // Student life green background
-    ctx.fillRect(squiresX - 50 - this.cameraX, squiresY - this.cameraY, 100, 12);
-    
-    // Squires text
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('SQUIRES STUDENT CENTER', squiresX - this.cameraX, squiresY + 8 - this.cameraY);
-    
-    // Owens Hall sign (building at x: 1-6, y: 13-16)
-    const owensX = 4 * this.tileSize; // Center of 6-tile wide building
-    const owensY = 13 * this.tileSize - 15; // Above the building
-    
-    // Owens sign background
+    // Prichard sign background
     ctx.fillStyle = '#D69E2E'; // Dining hall orange background
-    ctx.fillRect(owensX - 35 - this.cameraX, owensY - this.cameraY, 70, 12);
+    ctx.fillRect(prichardX - 40 - this.cameraX, prichardY - this.cameraY, 80, 12);
     
-    // Owens text
+    // Prichard text
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('OWENS HALL', owensX - this.cameraX, owensY + 8 - this.cameraY);
+    ctx.fillText('PRICHARD HALL', prichardX - this.cameraX, prichardY + 8 - this.cameraY);
     
     // Cassell Coliseum sign (building at x: 18-23, y: 12-16)
     const cassellX = 21 * this.tileSize; // Center of 6-tile wide building
@@ -685,6 +676,34 @@ class CampusArea extends BaseArea {
     
     // Reset shadow
     ctx.shadowBlur = 0;
+  }
+
+  private renderDrillfieldTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Base drillfield green - slightly different from regular grass
+    ctx.fillStyle = '#2d4a2b'; // Darker, richer green for well-maintained field
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    // Add subtle texture pattern to show it's maintained grass
+    ctx.fillStyle = '#3a5c37'; // Slightly lighter green for texture
+    const pattern = (x + y) % 8;
+    if (pattern < 2) {
+      ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+    }
+    
+    // Add some subtle grass blade details
+    ctx.fillStyle = '#4a7247';
+    for (let i = 0; i < 3; i++) {
+      const grassX = x + (i * 10) + 3;
+      const grassY = y + ((x + y + i) % 8) + 8;
+      ctx.fillRect(grassX, grassY, 1, 3);
+    }
+    
+    // Very subtle grid pattern to show it's a formal field
+    if ((Math.floor(x / this.tileSize) + Math.floor(y / this.tileSize)) % 4 === 0) {
+      ctx.fillStyle = '#1e3a1c';
+      ctx.fillRect(x, y, this.tileSize, 1); // Horizontal line
+      ctx.fillRect(x, y, 1, this.tileSize); // Vertical line
+    }
   }
 }
 
