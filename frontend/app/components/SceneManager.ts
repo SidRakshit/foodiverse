@@ -20,6 +20,7 @@ class SceneManager {
   private scenes: Map<SceneType, Scene> = new Map();
   private player: Player;
   private inputHandler: InputHandler;
+  private lastBuildingEntry: { buildingType: string; tileX: number; tileY: number } | null = null;
 
   constructor(player: Player, inputHandler: InputHandler) {
     this.player = player;
@@ -124,9 +125,15 @@ class SceneManager {
     if (tile && tile.type === 'door') {
       const buildingType = tile.buildingType;
       console.log('🚪 Found door! Building type:', buildingType, 'at tile:', {playerTileX, playerTileY});
-      
+
       if (buildingType && this.scenes.has(buildingType as SceneType)) {
         console.log('✅ Entering building:', buildingType);
+        // Track where the player entered from
+        this.lastBuildingEntry = {
+          buildingType,
+          tileX: playerTileX,
+          tileY: playerTileY
+        };
         this.switchScene(buildingType as SceneType);
         return;
       } else {
@@ -168,23 +175,39 @@ class SceneManager {
     const exitInfo = this.currentScene.getExitPosition?.();
     if (exitInfo) {
       const distance = Math.sqrt(
-        Math.pow(this.player.x - exitInfo.x, 2) + 
+        Math.pow(this.player.x - exitInfo.x, 2) +
         Math.pow(this.player.y - exitInfo.y, 2)
       );
-      
+
       // If player is close to exit
       if (distance < 30) {
-        // Switch back to campus and position player outside the building
-        this.switchScene(exitInfo.scene, exitInfo.x, exitInfo.y);
+        // Use the tracked building position if available
+        if (this.lastBuildingEntry) {
+          const exitX = this.lastBuildingEntry.tileX * 32 + 16; // Center of tile
+          const exitY = (this.lastBuildingEntry.tileY + 1) * 32; // One tile below the door
+          this.switchScene('campus', exitX, exitY);
+          console.log(`Exited building by walking to door: (${exitX}, ${exitY})`);
+        } else {
+          // Fallback to the building's default exit position
+          this.switchScene(exitInfo.scene, exitInfo.x, exitInfo.y);
+        }
       }
     }
   }
 
   private exitToOutside(): void {
     // Exit building and return to campus
-    // Position player at a default campus location
-    this.switchScene('campus', 400, 912); // Campus center
-    console.log('Exited building with ESC key');
+    if (this.lastBuildingEntry) {
+      // Calculate position right below the building door
+      const exitX = this.lastBuildingEntry.tileX * 32 + 16; // Center of tile
+      const exitY = (this.lastBuildingEntry.tileY + 1) * 32; // One tile below the door
+      this.switchScene('campus', exitX, exitY);
+      console.log(`Exited building to position below door: (${exitX}, ${exitY})`);
+    } else {
+      // Fallback to campus center if no entry tracked
+      this.switchScene('campus', 400, 912);
+      console.log('Exited building with ESC key (fallback to center)');
+    }
   }
 
   public render(ctx: CanvasRenderingContext2D): void {
