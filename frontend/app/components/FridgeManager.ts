@@ -63,84 +63,20 @@ class FridgeManager {
   }
 
   private initializeDefaultFridges(): void {
-    // Initialize Edge apartment fridge
+    // Initialize Edge apartment fridge with empty items
     this.fridgeData.set('edge', {
       apartmentId: 'edge-apartment-001',
       residents: ['player1'], // Only player1 lives here
       lastUpdated: new Date(),
-      items: [
-        {
-          id: 'milk-001',
-          name: 'Milk (2%)',
-          quantity: 1,
-          addedBy: 'system',
-          dateAdded: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          expirationDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-          category: 'dairy'
-        },
-        {
-          id: 'leftover-001',
-          name: 'Pizza (2 slices)',
-          quantity: 2,
-          addedBy: 'roommate1',
-          dateAdded: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          expirationDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          category: 'leftovers'
-        },
-        {
-          id: 'soda-001',
-          name: 'Coke Cans',
-          quantity: 6,
-          addedBy: 'roommate2',
-          dateAdded: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          category: 'beverages'
-        }
-      ]
+      items: [] // Start with empty items - will be populated from database
     });
 
-    // Initialize Tech Terrace apartment fridge
+    // Initialize Tech Terrace apartment fridge with empty items
     this.fridgeData.set('techterrace', {
       apartmentId: 'techterrace-apartment-001',
       residents: ['roommate1', 'roommate2', 'roommate3'], // Other people live here
       lastUpdated: new Date(),
-      items: [
-        {
-          id: 'energy-001',
-          name: 'Energy Drinks',
-          quantity: 4,
-          addedBy: 'roommate1',
-          dateAdded: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          expirationDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-          category: 'beverages'
-        },
-        {
-          id: 'leftover-002',
-          name: 'Ramen Noodles',
-          quantity: 3,
-          addedBy: 'roommate2',
-          dateAdded: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-          category: 'leftovers'
-        },
-        {
-          id: 'fruit-001',
-          name: 'Oranges',
-          quantity: 5,
-          addedBy: 'system',
-          dateAdded: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          category: 'fruits'
-        },
-        {
-          id: 'dairy-001',
-          name: 'Greek Yogurt',
-          quantity: 2,
-          addedBy: 'roommate3',
-          dateAdded: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          expirationDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
-          category: 'dairy'
-        }
-      ]
+      items: [] // Start with empty items - will be populated from database
     });
   }
 
