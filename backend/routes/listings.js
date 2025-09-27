@@ -1,24 +1,8 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
-const multer = require("multer");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { createClient } = require("@supabase/supabase-js");
 const pool = require("../db");
 
 const router = express.Router();
-
-/* ---------- setup ---------- */
-const upload = multer({
-  dest: "uploads/",
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Only image uploads allowed"));
-  },
-});
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 /* ---------- auth middleware ---------- */
 function authMiddleware(req, res, next) {
@@ -33,93 +17,293 @@ function authMiddleware(req, res, next) {
   }
 }
 
-/* ---------- helpers ---------- */
-async function identifyFoodFromFile(filePath) {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-  const prompt = "Identify the food item in this picture. Reply with just the food name.";
-  const image = fs.readFileSync(filePath);
-  const result = await model.generateContent([
-    prompt,
-    { inlineData: { data: image.toString("base64"), mimeType: "image/jpeg" } },
-  ]);
-  return result.response.text().trim();
-}
-
 /* ---------- routes ---------- */
 
-// Create listing from JSON body (manual item_name)
-router.post("/", authMiddleware, async (req, res) => {
+// Health check endpoint
+router.get("/health", async (req, res) => {
   try {
-    const { item_name, photo_url, location } = req.body;
-    const q = `INSERT INTO listings (user_id, item_name, photo_url, location)
-               VALUES ($1,$2,$3,$4) RETURNING *`;
-    const result = await pool.query(q, [req.user.id, item_name, photo_url, location]);
-    res.json(result.rows[0]);
+    // Simple database connectivity check
+    await pool.query("SELECT 1");
+    res.json({ status: "healthy", timestamp: new Date().toISOString() });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Health check failed:", err);
+    res.status(503).json({ status: "unhealthy", error: "Database connection failed" });
   }
 });
 
-// Create listing from uploaded photo (Gemini + Supabase Storage)
-router.post("/photo", authMiddleware, upload.single("photo"), async (req, res) => {
-  const tmpPath = req.file.path;
-  try {
-    const location = req.body.location || "Unknown";
-
-    // 1) Gemini detect item name
-    const item_name = (await identifyFoodFromFile(tmpPath)) || "Unknown Item";
-
-    // 2) Upload image bytes to Supabase Storage (bucket: photos)
-    const storagePath = `${req.user.id}/${Date.now()}_${req.file.originalname}`;
-    const fileBuffer = fs.readFileSync(tmpPath);
-    const { error: upErr } = await supabase
-      .storage
-      .from("photos")
-      .upload(storagePath, fileBuffer, { contentType: req.file.mimetype, upsert: true });
-    if (upErr) throw upErr;
-
-    // 3) Get public URL
-    const { data: pub } = supabase.storage.from("photos").getPublicUrl(storagePath);
-    const photoUrl = pub.publicUrl;
-
-    // 4) Save listing
-    const q = `INSERT INTO listings (user_id, item_name, photo_url, location)
-               VALUES ($1,$2,$3,$4) RETURNING *`;
-    const result = await pool.query(q, [req.user.id, item_name, photoUrl, location]);
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Upload or Gemini failed" });
-  } finally {
-    try { fs.unlinkSync(tmpPath); } catch {}
-  }
-});
-
-// Get available listings
+// Get fridge food items - filtered by apartment/building if specified
 router.get("/", async (req, res) => {
   try {
-    const sql = `SELECT l.id, l.item_name, l.photo_url, l.location, l.status,
-                        u.id AS owner_id, COALESCE(u.name, u.email) AS owner_name
-                 FROM listings l
-                 JOIN users u ON l.user_id = u.id
-                 WHERE l.status = 'available'`;
-    const result = await pool.query(sql);
-    res.json(result.rows);
+    const { apartment_id, building_id } = req.query;
+    
+    let query = `
+      SELECT 
+        l.id,
+        l.item_name,
+        l.photo_url,
+        l.apartment_number,
+        l.building_number,
+        l.days_to_expiry,
+        l.status,
+        l.created_at,
+        l.building_id,
+        l.user_id,
+        u.name AS owner_name
+      FROM listings l
+      LEFT JOIN users u ON l.user_id = u.id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let paramCount = 1;
+    
+    // Filter by building_id if provided
+    if (building_id) {
+      query += ` AND l.building_id = $${paramCount}`;
+      // Convert to integer if it's a string number
+      const buildingIdInt = parseInt(building_id);
+      params.push(isNaN(buildingIdInt) ? building_id : buildingIdInt);
+      paramCount++;
+    }
+    
+    // Filter by apartment if provided
+    if (apartment_id) {
+      query += ` AND l.apartment_number = $${paramCount}`;
+      params.push(apartment_id);
+      paramCount++;
+    }
+    
+    query += ` ORDER BY l.created_at DESC`;
+    
+    const result = await pool.query(query, params);
+    
+    // Transform data to match FridgeItem interface
+    const fridgeItems = result.rows.map(row => ({
+      id: row.id.toString(),
+      name: row.item_name,
+      quantity: 1, // Default quantity
+      addedBy: row.owner_name || 'Unknown',
+      dateAdded: new Date(row.created_at),
+      expirationDate: row.days_to_expiry ? 
+        new Date(Date.now() + (row.days_to_expiry * 24 * 60 * 60 * 1000)) : 
+        undefined,
+      category: 'other', // Default category, could be enhanced with AI categorization
+      status: row.status || 'available',
+      photo_url: row.photo_url,
+      apartment_number: row.apartment_number,
+      building_number: row.building_number,
+      building_id: row.building_id,
+      user_id: row.user_id
+    }));
+
+    res.json(fridgeItems);
   } catch (err) {
-    console.error("Listings error:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("Error fetching fridge items:", err);
+    res.status(500).json({ error: "Failed to fetch fridge items" });
   }
 });
 
+// Add/Update fridge food item
+router.post("/", authMiddleware, async (req, res) => {
+  try {
+    const {
+      item_name,
+      photo_url,
+      apartment_number,
+      building_number,
+      days_to_expiry,
+      quantity = 1,
+      category = 'other'
+    } = req.body;
+    
+    // Validation
+    if (!item_name) {
+      return res.status(400).json({ error: "item_name is required" });
+    }
+    
+    const q = `
+      INSERT INTO listings (
+        user_id, 
+        building_id, 
+        item_name, 
+        photo_url, 
+        apartment_number, 
+        building_number, 
+        days_to_expiry,
+        status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'available') 
+      RETURNING *
+    `;
+    
+    const result = await pool.query(q, [
+      req.user.id,
+      parseInt(req.user.building_id) || 1, // Ensure building_id is an integer
+      item_name,
+      photo_url,
+      apartment_number,
+      building_number,
+      days_to_expiry,
+    ]);
 
-// Claim
+    // Transform response to match FridgeItem interface
+    const newItem = {
+      id: result.rows[0].id.toString(),
+      name: result.rows[0].item_name,
+      quantity: quantity,
+      addedBy: req.user.name || req.user.email || 'User',
+      dateAdded: new Date(result.rows[0].created_at),
+      expirationDate: days_to_expiry ? 
+        new Date(Date.now() + (days_to_expiry * 24 * 60 * 60 * 1000)) : 
+        undefined,
+      category: category,
+      status: result.rows[0].status,
+      photo_url: result.rows[0].photo_url,
+      apartment_number: result.rows[0].apartment_number,
+      building_number: result.rows[0].building_number,
+      building_id: result.rows[0].building_id,
+      user_id: result.rows[0].user_id
+    };
+
+    res.json(newItem);
+  } catch (err) {
+    console.error("Error adding fridge item:", err);
+    res.status(500).json({ error: "Failed to add fridge item" });
+  }
+});
+
+// Update fridge food item status (for claiming/completing items)
+router.put("/", authMiddleware, async (req, res) => {
+  try {
+    const { id, status, apartment_id, building_id, items } = req.body;
+    
+    // If updating a single item
+    if (id && status) {
+      const q = `UPDATE listings SET status = $1 WHERE id = $2 RETURNING *`;
+      const result = await pool.query(q, [status, id]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+      
+      res.json({ message: `Item ${status} successfully`, item: result.rows[0] });
+    }
+    // If bulk updating items for a fridge
+    else if (items && Array.isArray(items)) {
+      const client = await pool.connect();
+      
+      try {
+        await client.query('BEGIN');
+        
+        const results = [];
+        
+        for (const item of items) {
+          if (item.id) {
+            // Update existing item
+            const q = `
+              UPDATE listings 
+              SET 
+                item_name = $1,
+                days_to_expiry = $2,
+                status = $3
+              WHERE id = $4 
+              RETURNING *
+            `;
+            const result = await client.query(q, [
+              item.name,
+              item.days_to_expiry,
+              item.status || 'available',
+              item.id
+            ]);
+            
+            if (result.rows.length > 0) {
+              results.push(result.rows[0]);
+            }
+          } else {
+            // Insert new item
+            const q = `
+              INSERT INTO listings (
+                user_id, 
+                building_id, 
+                item_name, 
+                apartment_number, 
+                building_number, 
+                days_to_expiry,
+                status
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, 'available') 
+              RETURNING *
+            `;
+            const result = await client.query(q, [
+              req.user.id,
+              building_id || req.user.building_id,
+              item.name,
+              apartment_id,
+              building_id,
+              item.days_to_expiry
+            ]);
+            
+            results.push(result.rows[0]);
+          }
+        }
+        
+        await client.query('COMMIT');
+        res.json({ message: "Fridge updated successfully", items: results });
+        
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+    else {
+      res.status(400).json({ error: "Invalid request. Provide either id+status or items array." });
+    }
+    
+  } catch (err) {
+    console.error("Error updating fridge:", err);
+    res.status(500).json({ error: "Failed to update fridge" });
+  }
+});
+// Delete fridge food item
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if item exists and user has permission
+    const checkQuery = "SELECT * FROM listings WHERE id = $1";
+    const checkResult = await pool.query(checkQuery, [id]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+    
+    const item = checkResult.rows[0];
+    
+    // Allow deletion if user owns the item or is admin
+    if (item.user_id !== req.user.id && !req.user.isAdmin) {
+      return res.status(403).json({ error: "Not authorized to delete this item" });
+    }
+    
+    const deleteQuery = "DELETE FROM listings WHERE id = $1 RETURNING *";
+    const result = await pool.query(deleteQuery, [id]);
+    
+    res.json({ message: "Item deleted successfully", item: result.rows[0] });
+  } catch (err) {
+    console.error("Error deleting item:", err);
+    res.status(500).json({ error: "Failed to delete item" });
+  }
+});
+
+// Claim item (legacy support)
 router.put("/:id/claim", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const listing = await pool.query("SELECT * FROM listings WHERE id=$1", [id]);
-    if (listing.rows.length === 0) return res.status(404).json({ error: "Listing not found" });
+    
+    if (listing.rows.length === 0)
+      return res.status(404).json({ error: "Listing not found" });
     if (listing.rows[0].status !== "available")
       return res.status(400).json({ error: "Listing already claimed/completed" });
 
@@ -131,17 +315,21 @@ router.put("/:id/claim", authMiddleware, async (req, res) => {
   }
 });
 
-// Complete (award points)
+// Complete item (legacy support)
 router.put("/:id/complete", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const listing = await pool.query("SELECT * FROM listings WHERE id=$1", [id]);
-    if (listing.rows.length === 0) return res.status(404).json({ error: "Listing not found" });
+    
+    if (listing.rows.length === 0)
+      return res.status(404).json({ error: "Listing not found" });
     if (listing.rows[0].status !== "claimed")
       return res.status(400).json({ error: "Listing must be claimed first" });
 
     await pool.query("UPDATE listings SET status='completed' WHERE id=$1", [id]);
-    await pool.query("UPDATE users SET points = points + 10 WHERE id=$1", [listing.rows[0].user_id]);
+    await pool.query("UPDATE users SET points = points + 10 WHERE id=$1", [
+      listing.rows[0].user_id,
+    ]);
     res.json({ message: "Transaction completed, points awarded" });
   } catch (err) {
     console.error(err);

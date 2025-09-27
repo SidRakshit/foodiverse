@@ -1,3 +1,5 @@
+import { apiService, BackendFridgeItem } from '../services/ApiService';
+
 export interface FridgeItem {
   id: string;
   name: string;
@@ -6,6 +8,14 @@ export interface FridgeItem {
   dateAdded: Date;
   expirationDate?: Date;
   category: 'dairy' | 'meat' | 'vegetables' | 'fruits' | 'leftovers' | 'beverages' | 'condiments' | 'other';
+  // Additional fields for database integration
+  status?: 'available' | 'claimed' | 'completed';
+  photo_url?: string;
+  apartment_number?: string;
+  building_number?: string;
+  building_id?: string;
+  user_id?: string;
+  isLocalItem?: boolean; // Flag to distinguish local vs database items
 }
 
 export interface FridgeData {
@@ -13,6 +23,7 @@ export interface FridgeData {
   lastUpdated: Date;
   apartmentId: string;
   residents: string[];
+  isOnline?: boolean; // Track if we're connected to the database
 }
 
 class FridgeManager {
@@ -27,6 +38,10 @@ class FridgeManager {
     currentFridge: null,
     selectedItemIndex: 0
   };
+  private isLoading: boolean = false;
+  private lastRefresh: Map<string, number> = new Map(); // Track last refresh time per fridge
+  private refreshInterval: number = 30000; // 30 seconds
+  private currentUser: string = 'player1'; // This should be set based on actual authentication
 
   static getInstance(): FridgeManager {
     if (!FridgeManager.instance) {
@@ -37,6 +52,15 @@ class FridgeManager {
 
   constructor() {
     this.initializeDefaultFridges();
+    // Set up a mock auth token for development
+    // In production, this should come from your authentication system
+    this.setupMockAuth();
+  }
+
+  private setupMockAuth(): void {
+    // This is a mock setup - replace with real authentication
+    const mockToken = 'mock-jwt-token-for-development';
+    apiService.setAuthToken(mockToken);
   }
 
   private initializeDefaultFridges(): void {
@@ -122,7 +146,14 @@ class FridgeManager {
   }
 
   // Public methods - everyone can view
-  public getFridgeItems(fridgeId: string): FridgeItem[] {
+  public async getFridgeItems(fridgeId: string): Promise<FridgeItem[]> {
+    await this.refreshFridgeData(fridgeId);
+    const fridge = this.fridgeData.get(fridgeId);
+    return fridge ? [...fridge.items] : [];
+  }
+
+  // Synchronous version for immediate access to cached data
+  public getFridgeItemsSync(fridgeId: string): FridgeItem[] {
     const fridge = this.fridgeData.get(fridgeId);
     return fridge ? [...fridge.items] : [];
   }
@@ -133,10 +164,13 @@ class FridgeManager {
   }
 
   // UI State Management
-  public openFridgeUI(fridgeId: string): void {
+  public async openFridgeUI(fridgeId: string): Promise<void> {
     this.uiState.isOpen = true;
     this.uiState.currentFridge = fridgeId;
     this.uiState.selectedItemIndex = 0;
+    
+    // Refresh data when opening UI
+    await this.refreshFridgeData(fridgeId);
   }
 
   public closeFridgeUI(): void {
@@ -154,49 +188,102 @@ class FridgeManager {
   }
 
   // Modification methods (only for residents)
-  public addItem(fridgeId: string, item: Omit<FridgeItem, 'id' | 'dateAdded'>, playerId: string): boolean {
+  public async addItem(fridgeId: string, item: Omit<FridgeItem, 'id' | 'dateAdded'>, playerId: string): Promise<boolean> {
     if (!this.canPlayerModify(fridgeId, playerId)) {
       console.log(`Player ${playerId} cannot modify fridge ${fridgeId} - not a resident`);
       return false;
     }
 
-    const fridge = this.fridgeData.get(fridgeId);
-    if (!fridge) return false;
+    try {
+      const fridge = this.fridgeData.get(fridgeId);
+      if (!fridge) return false;
 
-    const newItem: FridgeItem = {
-      ...item,
-      id: `${item.category}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      dateAdded: new Date(),
-      addedBy: playerId
-    };
+      // Try to add to database first
+      const daysToExpiry = item.expirationDate ? 
+        Math.ceil((item.expirationDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000)) : 
+        undefined;
 
-    fridge.items.push(newItem);
-    fridge.lastUpdated = new Date();
-    
-    console.log(`Added item: ${newItem.name} to fridge ${fridgeId} by ${playerId}`);
-    return true;
+      const response = await apiService.addFridgeItem({
+        item_name: item.name,
+        photo_url: item.photo_url,
+        apartment_number: fridge.apartmentId,
+        building_number: this.getBuildingNumber(fridgeId),
+        days_to_expiry: daysToExpiry,
+        quantity: item.quantity,
+        category: item.category
+      });
+
+      if (response.error) {
+        console.warn('Failed to add item to database, adding locally:', response.error);
+        // Fall back to local storage
+        const newItem: FridgeItem = {
+          ...item,
+          id: `local-${item.category}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          dateAdded: new Date(),
+          addedBy: playerId,
+          isLocalItem: true
+        };
+        fridge.items.push(newItem);
+      } else if (response.data) {
+        // Success - refresh data to show the new item
+        await this.refreshFridgeData(fridgeId);
+      }
+
+      fridge.lastUpdated = new Date();
+      console.log(`Added item: ${item.name} to fridge ${fridgeId} by ${playerId}`);
+      return true;
+    } catch (error) {
+      console.error('Error adding item:', error);
+      return false;
+    }
   }
 
-  public removeItem(fridgeId: string, itemId: string, playerId: string): boolean {
+  public async removeItem(fridgeId: string, itemId: string, playerId: string): Promise<boolean> {
     if (!this.canPlayerModify(fridgeId, playerId)) {
       console.log(`Player ${playerId} cannot modify fridge ${fridgeId} - not a resident`);
       return false;
     }
 
-    const fridge = this.fridgeData.get(fridgeId);
-    if (!fridge) return false;
+    try {
+      const fridge = this.fridgeData.get(fridgeId);
+      if (!fridge) return false;
 
-    const itemIndex = fridge.items.findIndex(item => item.id === itemId);
-    if (itemIndex === -1) {
-      console.log(`Item ${itemId} not found in fridge ${fridgeId}`);
+      const itemIndex = fridge.items.findIndex(item => item.id === itemId);
+      if (itemIndex === -1) {
+        console.log(`Item ${itemId} not found in fridge ${fridgeId}`);
+        return false;
+      }
+
+      const item = fridge.items[itemIndex];
+
+      // If it's a local item or database deletion fails, remove locally
+      if (item.isLocalItem) {
+        const removedItem = fridge.items.splice(itemIndex, 1)[0];
+        fridge.lastUpdated = new Date();
+        console.log(`Removed local item: ${removedItem.name} from fridge ${fridgeId} by ${playerId}`);
+        return true;
+      }
+
+      // Try to delete from database
+      const response = await apiService.deleteFridgeItem(itemId);
+      
+      if (response.error) {
+        console.warn('Failed to delete from database, removing locally:', response.error);
+        const removedItem = fridge.items.splice(itemIndex, 1)[0];
+        fridge.lastUpdated = new Date();
+        console.log(`Removed item locally: ${removedItem.name} from fridge ${fridgeId} by ${playerId}`);
+        return true;
+      }
+
+      // Success - refresh data
+      await this.refreshFridgeData(fridgeId);
+      fridge.lastUpdated = new Date();
+      console.log(`Removed item from database: ${item.name} from fridge ${fridgeId} by ${playerId}`);
+      return true;
+    } catch (error) {
+      console.error('Error removing item:', error);
       return false;
     }
-
-    const removedItem = fridge.items.splice(itemIndex, 1)[0];
-    fridge.lastUpdated = new Date();
-    
-    console.log(`Removed item: ${removedItem.name} from fridge ${fridgeId} by ${playerId}`);
-    return true;
   }
 
   // UI Rendering
@@ -204,8 +291,9 @@ class FridgeManager {
     if (!this.uiState.isOpen || !this.uiState.currentFridge) return;
 
     const fridgeId = this.uiState.currentFridge;
-    const items = this.getFridgeItems(fridgeId);
+    const items = this.getFridgeItemsSync(fridgeId);
     const canModify = this.canPlayerModify(fridgeId, playerId);
+    const fridge = this.fridgeData.get(fridgeId);
 
     const uiWidth = 400;
     const uiHeight = 500;
@@ -240,11 +328,26 @@ class FridgeManager {
     ctx.fillText('×', uiX + uiWidth - 20, uiY + 25);
     
     // Permission indicator
+    // Permission and connection status
     ctx.fillStyle = canModify ? '#27AE60' : '#F39C12';
     ctx.font = '12px Arial';
     ctx.textAlign = 'left';
     const permissionText = canModify ? '✓ Resident (can modify)' : '👁 Visitor (view only)';
     ctx.fillText(permissionText, uiX + 10, uiY + 60);
+    
+    // Connection status
+    const isOnline = fridge?.isOnline !== false;
+    ctx.fillStyle = isOnline ? '#27AE60' : '#E74C3C';
+    ctx.font = '10px Arial';
+    const statusText = isOnline ? '🌐 Online' : '📴 Offline';
+    ctx.fillText(statusText, uiX + uiWidth - 80, uiY + 60);
+    
+    // Loading indicator
+    if (this.isLoading) {
+      ctx.fillStyle = '#3498DB';
+      ctx.font = '10px Arial';
+      ctx.fillText('🔄 Loading...', uiX + uiWidth - 80, uiY + 75);
+    }
     
     // Items list
     this.renderItemsList(ctx, items, uiX + 10, uiY + 80, uiWidth - 20, uiHeight - 120);
@@ -254,9 +357,15 @@ class FridgeManager {
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
     if (canModify) {
-      ctx.fillText('Press A to add item, D to delete selected item, ↑↓ to navigate, ESC to close', uiX + uiWidth / 2, uiY + uiHeight - 10);
+      const instructions = isOnline 
+        ? 'Press A to add item, D to delete selected item, C to claim, X to complete, R to refresh, ↑↓ to navigate, ESC to close'
+        : 'Press A to add local item, D to delete item, R to retry connection, ↑↓ to navigate, ESC to close';
+      ctx.fillText(instructions, uiX + uiWidth / 2, uiY + uiHeight - 10);
     } else {
-      ctx.fillText('Press ESC to close', uiX + uiWidth / 2, uiY + uiHeight - 10);
+      const instructions = isOnline 
+        ? 'Press C to claim items, X to complete, R to refresh, ESC to close'
+        : 'Press R to retry connection, ESC to close';
+      ctx.fillText(instructions, uiX + uiWidth / 2, uiY + uiHeight - 10);
     }
     
     ctx.restore();
@@ -310,13 +419,19 @@ class FridgeManager {
     const isExpiringSoon = item.expirationDate && 
       (item.expirationDate.getTime() - Date.now()) < (2 * 24 * 60 * 60 * 1000);
     
-    // Item background
+    // Item background - color based on status and type
     if (isSelected) {
       ctx.fillStyle = '#3498DB'; // Blue selection
+    } else if (item.status === 'claimed') {
+      ctx.fillStyle = '#D5DBDB'; // Gray for claimed
+    } else if (item.status === 'completed') {
+      ctx.fillStyle = '#D5F4E6'; // Light green for completed
+    } else if (item.isLocalItem) {
+      ctx.fillStyle = '#FFF3CD'; // Light yellow for local items
     } else if (isExpiringSoon) {
       ctx.fillStyle = '#FADBD8'; // Red for expiring
     } else {
-      ctx.fillStyle = '#FFFFFF'; // White default
+      ctx.fillStyle = '#E8F4FD'; // Light blue for database items
     }
     ctx.fillRect(x, y, width, height);
     
@@ -340,25 +455,42 @@ class FridgeManager {
     ctx.textAlign = 'left';
     ctx.fillText(`${item.name} (${item.quantity})`, x + 30, y + 15);
     
-    // Added by and date
+    // Added by, date, and status
     ctx.fillStyle = isSelected ? '#ECF0F1' : '#7F8C8D';
     ctx.font = '9px Arial';
-    const addedText = `Added by ${item.addedBy} on ${item.dateAdded.toLocaleDateString()}`;
+    let statusText = '';
+    if (item.status && item.status !== 'available') {
+      statusText = ` [${item.status.toUpperCase()}]`;
+    }
+    if (item.isLocalItem) {
+      statusText += ' [LOCAL]';
+    } else if (!item.isLocalItem) {
+      statusText += ' [DB]';
+    }
+    const addedText = `Added by ${item.addedBy} on ${item.dateAdded.toLocaleDateString()}${statusText}`;
     ctx.fillText(addedText, x + 30, y + 28);
     
-    // Expiration warning
+    // Expiration warning or status indicator
     if (isExpiringSoon && item.expirationDate) {
       ctx.fillStyle = isSelected ? '#FFFFFF' : '#E74C3C';
       ctx.font = 'bold 9px Arial';
       const daysLeft = Math.ceil((item.expirationDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
       ctx.fillText(`⚠️ Expires in ${daysLeft} days!`, x + width - 120, y + 28);
+    } else if (item.status === 'claimed') {
+      ctx.fillStyle = isSelected ? '#FFFFFF' : '#7F8C8D';
+      ctx.font = 'bold 9px Arial';
+      ctx.fillText('📋 CLAIMED', x + width - 80, y + 28);
+    } else if (item.status === 'completed') {
+      ctx.fillStyle = isSelected ? '#FFFFFF' : '#27AE60';
+      ctx.font = 'bold 9px Arial';
+      ctx.fillText('✅ COMPLETED', x + width - 90, y + 28);
     }
   }
 
   // Navigation methods
   public selectNextItem(): void {
     if (!this.uiState.currentFridge) return;
-    const items = this.getFridgeItems(this.uiState.currentFridge);
+    const items = this.getFridgeItemsSync(this.uiState.currentFridge);
     if (items.length > 0) {
       this.uiState.selectedItemIndex = (this.uiState.selectedItemIndex + 1) % items.length;
     }
@@ -366,7 +498,7 @@ class FridgeManager {
 
   public selectPreviousItem(): void {
     if (!this.uiState.currentFridge) return;
-    const items = this.getFridgeItems(this.uiState.currentFridge);
+    const items = this.getFridgeItemsSync(this.uiState.currentFridge);
     if (items.length > 0) {
       this.uiState.selectedItemIndex = this.uiState.selectedItemIndex > 0 
         ? this.uiState.selectedItemIndex - 1 
@@ -374,12 +506,12 @@ class FridgeManager {
     }
   }
 
-  public deleteSelectedItem(playerId: string): boolean {
+  public async deleteSelectedItem(playerId: string): Promise<boolean> {
     if (!this.uiState.currentFridge) return false;
-    const items = this.getFridgeItems(this.uiState.currentFridge);
+    const items = this.getFridgeItemsSync(this.uiState.currentFridge);
     if (items.length > 0 && this.uiState.selectedItemIndex < items.length) {
       const item = items[this.uiState.selectedItemIndex];
-      const success = this.removeItem(this.uiState.currentFridge, item.id, playerId);
+      const success = await this.removeItem(this.uiState.currentFridge, item.id, playerId);
       if (success && this.uiState.selectedItemIndex >= items.length - 1) {
         this.uiState.selectedItemIndex = Math.max(0, items.length - 2);
       }
@@ -388,7 +520,7 @@ class FridgeManager {
     return false;
   }
 
-  public addRandomItem(fridgeId: string, playerId: string): boolean {
+  public async addRandomItem(fridgeId: string, playerId: string): Promise<boolean> {
     const sampleItems = [
       { name: 'Leftover Sandwich', category: 'leftovers' as const, quantity: 1 },
       { name: 'Energy Drink', category: 'beverages' as const, quantity: 1 },
@@ -404,11 +536,167 @@ class FridgeManager {
     
     const randomItem = sampleItems[Math.floor(Math.random() * sampleItems.length)];
     
-    return this.addItem(fridgeId, {
+    return await this.addItem(fridgeId, {
       ...randomItem,
       addedBy: playerId,
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     }, playerId);
+  }
+
+  // Database integration methods
+  private async refreshFridgeData(fridgeId: string, force: boolean = false): Promise<void> {
+    const now = Date.now();
+    const lastRefresh = this.lastRefresh.get(fridgeId) || 0;
+    
+    // Skip if recently refreshed (unless forced)
+    if (!force && now - lastRefresh < this.refreshInterval) {
+      return;
+    }
+
+    if (this.isLoading) return;
+    this.isLoading = true;
+
+    try {
+      const fridge = this.fridgeData.get(fridgeId);
+      if (!fridge) return;
+
+      console.log(`🔄 Refreshing fridge data for ${fridgeId}...`);
+
+      // Get data from database
+      const response = await apiService.getFridgeItems(fridge.apartmentId, this.getBuildingId(fridgeId));
+      
+      if (response.error) {
+        console.warn('🚨 Failed to fetch from database:', response.error);
+        if (fridge) {
+          fridge.isOnline = false;
+        }
+        
+        // Show user-friendly message if this is the first time opening
+        if (force || fridge.items.length === 0) {
+          console.log('📴 Operating in offline mode - showing local items only');
+          console.log('💡 To connect to database: Make sure backend server is running on http://localhost:5000');
+        }
+      } else if (response.data) {
+        // Transform backend items to frontend format
+        const databaseItems: FridgeItem[] = response.data.map(this.transformBackendItem);
+        
+        // Merge with local items (items that were added offline)
+        const localItems = fridge.items.filter(item => item.isLocalItem);
+        
+        fridge.items = [...databaseItems, ...localItems];
+        fridge.lastUpdated = new Date();
+        fridge.isOnline = true;
+        
+        console.log(`✅ Refreshed fridge ${fridgeId} with ${databaseItems.length} database items and ${localItems.length} local items`);
+      }
+      
+      this.lastRefresh.set(fridgeId, now);
+    } catch (error) {
+      console.error('💥 Error refreshing fridge data:', error);
+      const fridge = this.fridgeData.get(fridgeId);
+      if (fridge) {
+        fridge.isOnline = false;
+      }
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  private transformBackendItem(backendItem: BackendFridgeItem): FridgeItem {
+    return {
+      id: backendItem.id,
+      name: backendItem.name,
+      quantity: backendItem.quantity,
+      addedBy: backendItem.addedBy,
+      dateAdded: new Date(backendItem.dateAdded),
+      expirationDate: backendItem.expirationDate ? new Date(backendItem.expirationDate) : undefined,
+      category: backendItem.category,
+      status: backendItem.status,
+      photo_url: backendItem.photo_url,
+      apartment_number: backendItem.apartment_number,
+      building_number: backendItem.building_number,
+      building_id: backendItem.building_id,
+      user_id: backendItem.user_id,
+      isLocalItem: false
+    };
+  }
+
+  private getBuildingId(fridgeId: string): string {
+    // Map fridge IDs to building IDs (as integers for database)
+    const buildingMap: { [key: string]: string } = {
+      'edge': '1',
+      'techterrace': '2'
+    };
+    return buildingMap[fridgeId] || '1';
+  }
+
+  private getBuildingNumber(fridgeId: string): string {
+    // Map fridge IDs to building numbers
+    const buildingMap: { [key: string]: string } = {
+      'edge': '1',
+      'techterrace': '2'
+    };
+    return buildingMap[fridgeId] || '0';
+  }
+
+  // Additional database operations
+  public async claimItem(itemId: string): Promise<boolean> {
+    try {
+      const response = await apiService.claimItem(itemId);
+      if (response.error) {
+        console.error('Failed to claim item:', response.error);
+        return false;
+      }
+      
+      // Refresh current fridge data
+      if (this.uiState.currentFridge) {
+        await this.refreshFridgeData(this.uiState.currentFridge);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error claiming item:', error);
+      return false;
+    }
+  }
+
+  public async completeItem(itemId: string): Promise<boolean> {
+    try {
+      const response = await apiService.completeItem(itemId);
+      if (response.error) {
+        console.error('Failed to complete item:', response.error);
+        return false;
+      }
+      
+      // Refresh current fridge data
+      if (this.uiState.currentFridge) {
+        await this.refreshFridgeData(this.uiState.currentFridge);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error completing item:', error);
+      return false;
+    }
+  }
+
+  // Check if backend is available
+  public async isBackendAvailable(): Promise<boolean> {
+    return await apiService.ping();
+  }
+
+  // Force refresh current fridge
+  public async forceRefresh(): Promise<void> {
+    if (this.uiState.currentFridge) {
+      console.log('🔄 Force refreshing fridge data...');
+      this.lastRefresh.delete(this.uiState.currentFridge);
+      await this.refreshFridgeData(this.uiState.currentFridge, true);
+    }
+  }
+
+  // Get selected item index for external access
+  public getSelectedItemIndex(): number {
+    return this.uiState.selectedItemIndex;
   }
 }
 

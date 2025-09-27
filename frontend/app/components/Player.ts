@@ -1,6 +1,7 @@
 import InputHandler from './InputHandler';
 import { Scene } from './types';
 import FridgeManager from './FridgeManager';
+import { BackendChecker } from '../utils/BackendChecker';
 
 class Player {
   public x: number;
@@ -386,7 +387,12 @@ class Player {
         if (inputHandler.wasKeyJustPressed('KeyE')) {
           console.log('🔑 E key pressed - opening Edge fridge UI!');
           if (!fridgeManager.isFridgeUIOpen()) {
-            fridgeManager.openFridgeUI('edge');
+            fridgeManager.openFridgeUI('edge').then(() => {
+              console.log('📋 Edge fridge UI opened');
+            }).catch(error => {
+              console.error('Failed to open fridge UI:', error);
+              console.log('💡 Tip: The fridge will still work in offline mode');
+            });
           }
         }
       } else {
@@ -410,7 +416,12 @@ class Player {
         if (inputHandler.wasKeyJustPressed('KeyE')) {
           console.log('🔑 E key pressed - opening Tech Terrace fridge UI!');
           if (!fridgeManager.isFridgeUIOpen()) {
-            fridgeManager.openFridgeUI('techterrace');
+            fridgeManager.openFridgeUI('techterrace').then(() => {
+              console.log('📋 Tech Terrace fridge UI opened');
+            }).catch(error => {
+              console.error('Failed to open fridge UI:', error);
+              console.log('💡 Tip: The fridge will still work in offline mode');
+            });
           }
         }
       } else {
@@ -447,15 +458,73 @@ class Player {
       fridgeManager.selectNextItem();
     }
     
+    // Claim item with 'C' key (available to all users)
+    if (inputHandler.wasKeyJustPressed('KeyC')) {
+      const items = fridgeManager.getFridgeItemsSync(currentFridge);
+      const selectedItem = items[fridgeManager.getSelectedItemIndex()];
+      if (selectedItem && selectedItem.status === 'available' && !selectedItem.isLocalItem) {
+        fridgeManager.claimItem(selectedItem.id).then(success => {
+          if (success) {
+            console.log('✅ Item claimed successfully');
+          } else {
+            console.log('❌ Failed to claim item');
+          }
+        });
+      }
+    }
+    
+    // Complete item with 'X' key (available to all users)
+    if (inputHandler.wasKeyJustPressed('KeyX')) {
+      const items = fridgeManager.getFridgeItemsSync(currentFridge);
+      const selectedItem = items[fridgeManager.getSelectedItemIndex()];
+      if (selectedItem && selectedItem.status === 'claimed' && !selectedItem.isLocalItem) {
+        fridgeManager.completeItem(selectedItem.id).then(success => {
+          if (success) {
+            console.log('🎉 Item completed successfully - points awarded!');
+          } else {
+            console.log('❌ Failed to complete item');
+          }
+        });
+      }
+    }
+    
     if (canModify) {
       // Add item with 'A' key
       if (inputHandler.wasKeyJustPressed('KeyA')) {
-        fridgeManager.addRandomItem(currentFridge, this.playerId);
+        fridgeManager.addRandomItem(currentFridge, this.playerId).then(success => {
+          if (success) {
+            console.log('✅ Item added successfully');
+          } else {
+            console.log('❌ Failed to add item');
+          }
+        });
       }
       
       // Delete selected item with 'D' key
       if (inputHandler.wasKeyJustPressed('KeyD')) {
-        fridgeManager.deleteSelectedItem(this.playerId);
+        fridgeManager.deleteSelectedItem(this.playerId).then(success => {
+          if (success) {
+            console.log('🗑️ Item deleted successfully');
+          } else {
+            console.log('❌ Failed to delete item');
+          }
+        });
+      }
+      
+      // Force refresh with 'R' key
+      if (inputHandler.wasKeyJustPressed('KeyR')) {
+        console.log('🔄 Refreshing fridge data...');
+        // Try to reconnect to backend first
+        BackendChecker.retryConnection().then(connected => {
+          if (connected) {
+            console.log('🎉 Backend reconnected! Refreshing data...');
+          }
+          return fridgeManager.forceRefresh();
+        }).then(() => {
+          console.log('✅ Fridge data refreshed');
+        }).catch(error => {
+          console.error('❌ Error during refresh:', error);
+        });
       }
     }
   }
