@@ -4,11 +4,11 @@ import { SceneType } from '../types';
 interface OffCampusTile {
   type: 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'tree' | 'house' | 'apartment' | 'restaurant' | 'shop' | 'door' | 'floor' | 'wall' | 'furniture' | 'window' | 'stairs' | 'elevator';
   solid: boolean;
-  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'hotel' | 'downtown' | 'tots' | 'hokiehouse' | 'centros';
+  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'hotel' | 'downtown' | 'tots' | 'hokiehouse' | 'centros' | 'edge';
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
 }
 
-class NameBarBuilding extends BaseArea {
+class NameBuildings extends BaseArea {
   public type: SceneType = 'campus'; // Still part of the main campus scene but different area
 
   protected getAreaName(): string {
@@ -66,7 +66,7 @@ class NameBarBuilding extends BaseArea {
     }
 
     // Student apartment complexes
-    this.createApartmentBuilding(world, 1, 1, 3, 2); // Apartment complex 1
+    this.createApartmentBuilding(world, 1, 1, 3, 2, 'edge'); // The Edge (top left)
     this.createApartmentBuilding(world, 5, 1, 4, 2); // Apartment complex 2
     this.createApartmentBuilding(world, 11, 1, 3, 2); // Apartment complex 3
     this.createApartmentBuilding(world, 16, 1, 4, 2); // Apartment complex 4
@@ -98,14 +98,14 @@ class NameBarBuilding extends BaseArea {
     }
   }
 
-  private createApartmentBuilding(world: OffCampusTile[][], x: number, y: number, width: number, height: number): void {
+  private createApartmentBuilding(world: OffCampusTile[][], x: number, y: number, width: number, height: number, buildingType: OffCampusTile['buildingType'] = 'apartment'): void {
     for (let by = y; by < y + height; by++) {
       for (let bx = x; bx < x + width; bx++) {
         if (bx < this.areaWidth && by < this.areaHeight) {
           if (by === y + height - 1 && bx === x + Math.floor(width / 2)) {
-            world[by][bx] = { type: 'door', solid: false, buildingType: 'apartment' };
+            world[by][bx] = { type: 'door', solid: false, buildingType };
           } else {
-            world[by][bx] = { type: 'building', solid: true, buildingType: 'apartment' };
+            world[by][bx] = { type: 'building', solid: true, buildingType };
           }
         }
       }
@@ -159,6 +159,20 @@ class NameBarBuilding extends BaseArea {
   }
 
   private renderBuildingSigns(ctx: CanvasRenderingContext2D): void {
+    // The Edge sign (building at x: 1-3, y: 1-2)
+    const edgeX = 2 * this.tileSize; // Center of 3-tile wide building
+    const edgeY = 1 * this.tileSize - 15; // Above the building
+    
+    // Edge sign background
+    ctx.fillStyle = '#2C3E50'; // Dark blue-gray background
+    ctx.fillRect(edgeX - 25 - this.cameraX, edgeY - this.cameraY, 50, 12);
+    
+    // Edge text
+    ctx.fillStyle = '#3498DB'; // Light blue text
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('THE EDGE', edgeX - this.cameraX, edgeY + 8 - this.cameraY);
+    
     // Tots sign (building at x: 2-4, y: 6-7)
     const totsX = 3 * this.tileSize; // Center of 3-tile wide building
     const totsY = 6 * this.tileSize - 15; // Above the building
@@ -209,10 +223,14 @@ class NameBarBuilding extends BaseArea {
     ctx.shadowBlur = 0; // Reset shadow
     
     // Add small decorative elements
-    // Tots: Food icon
-    ctx.fillStyle = '#FF6B35';
+    // The Edge: Apartment/Home icon
+    ctx.fillStyle = '#3498DB';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
+    ctx.fillText('🏠', edgeX - this.cameraX, edgeY - 5 - this.cameraY);
+    
+    // Tots: Food icon
+    ctx.fillStyle = '#FF6B35';
     ctx.fillText('🍟', totsX - this.cameraX, totsY - 5 - this.cameraY);
     
     // HokieHouse: Turkey (Hokie bird)
@@ -237,6 +255,10 @@ class NameBarBuilding extends BaseArea {
       case 'apartment':
         baseColor = '#A0522D'; // Brick color for apartments
         accentColor = '#8B4513';
+        break;
+      case 'edge':
+        baseColor = '#34495E'; // Modern dark gray for The Edge
+        accentColor = '#3498DB'; // Blue accent
         break;
       case 'restaurant':
         baseColor = '#CD853F'; // Warm color for restaurants
@@ -296,4 +318,4 @@ class NameBarBuilding extends BaseArea {
   }
 }
 
-export default NameBarBuilding;
+export default NameBuildings;

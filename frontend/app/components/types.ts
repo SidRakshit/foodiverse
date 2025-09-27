@@ -1,6 +1,6 @@
 import Player from './Player';
 
-export type SceneType = 'campus' | 'burruss' | 'newman' | 'torgersen' | 'squires' | 'owens' | 'war_memorial' | 'cassell' | 'drillfield' | 'lane_stadium' | 'tots' | 'hokiehouse' | 'centros' | 'tots_upstairs';
+export type SceneType = 'campus' | 'burruss' | 'newman' | 'torgersen' | 'squires' | 'owens' | 'war_memorial' | 'cassell' | 'drillfield' | 'lane_stadium' | 'tots' | 'hokiehouse' | 'centros' | 'tots_upstairs' | 'edge';
 
 export interface Scene {
   type: SceneType;

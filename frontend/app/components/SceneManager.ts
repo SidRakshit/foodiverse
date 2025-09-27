@@ -9,6 +9,7 @@ import TotsDownstairs from './off-campus/TotsDownstairs';
 import TotsUpstairs from './off-campus/TotsUpstairs';
 import HokieHouseInterior from './off-campus/HokieHouseInterior';
 import CentrosInterior from './off-campus/CentrosInterior';
+import EdgeInterior from './off-campus/EdgeInterior';
 import { Scene, SceneType } from './types';
 
 class SceneManager {
@@ -39,6 +40,9 @@ class SceneManager {
     this.scenes.set('tots_upstairs', new TotsUpstairs());
     this.scenes.set('hokiehouse', new HokieHouseInterior());
     this.scenes.set('centros', new CentrosInterior());
+    
+    // Off-campus apartment interiors
+    this.scenes.set('edge', new EdgeInterior());
   }
 
   public getCurrentScene(): Scene {
