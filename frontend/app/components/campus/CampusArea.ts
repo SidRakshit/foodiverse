@@ -88,12 +88,8 @@ class CampusArea extends BaseArea {
           }
           // Central building connecting the towers
           else if (bx >= x + 2 && bx <= x + width - 3) {
-            // Main entrance in center of building
-            if (by === y + height - 1 && bx === x + Math.floor(width / 2)) {
-              world[by][bx] = { type: 'door', solid: false, buildingType: 'burruss' };
-            }
-            // Upper central building (shorter than towers)
-            else if (by >= y + 1 && by <= y + height - 2) {
+            // Upper central building (shorter than towers) - no middle door
+            if (by >= y + 1 && by <= y + height - 2) {
               world[by][bx] = { type: 'building', solid: true, buildingType: 'burruss', part: 'center' };
             }
             // Open courtyard area at ground level between towers
@@ -194,34 +190,7 @@ class CampusArea extends BaseArea {
   }
 
   private generateCampusPaths(world: any[][]): void {
-    // Main campus walkway (horizontal) - avoid drillfield area
-    for (let x = 0; x < this.areaWidth; x++) {
-      if (world[9][x].type === 'grass' && world[9][x].buildingType !== 'drillfield') {
-        world[9][x] = { type: 'path', solid: false };
-      }
-    }
-    
-    // Vertical paths connecting buildings - avoid drillfield area
-    for (let y = 0; y < this.areaHeight; y++) {
-      // Path near library
-      if (world[y][5] && world[y][5].type === 'grass' && world[y][5].buildingType !== 'drillfield') {
-        world[y][5] = { type: 'path', solid: false };
-      }
-      // Path in center - avoid drillfield
-      if (world[y][12] && world[y][12].type === 'grass' && world[y][12].buildingType !== 'drillfield') {
-        world[y][12] = { type: 'path', solid: false };
-      }
-      // Path on right side
-      if (world[y][19] && world[y][19].type === 'grass' && world[y][19].buildingType !== 'drillfield') {
-        world[y][19] = { type: 'path', solid: false };
-      }
-    }
-
-    // Connecting paths to buildings
-    this.createPathToDoor(world, 5, 6, 'horizontal'); // To library
-    this.createPathToDoor(world, 11, 6, 'horizontal'); // To Burruss Hall
-    this.createPathToDoor(world, 14, 9, 'vertical'); // To classroom
-    this.createPathToDoor(world, 19, 9, 'vertical'); // To classroom
+    // No paths - campus has only grass and buildings
   }
 
   private createPathToDoor(world: any[][], startX: number, startY: number, direction: 'horizontal' | 'vertical'): void {
@@ -251,13 +220,12 @@ class CampusArea extends BaseArea {
     this.addBench(world, 13, 9);
     this.addBench(world, 18, 9);
     
-    // Add campus fountain
-    if (world[11][10].type === 'grass') {
+    // Add campus fountain (avoid drillfield)
+    if (world[11][10].type === 'grass' && world[11][10].buildingType !== 'drillfield') {
       world[11][10] = { type: 'fountain', solid: true };
     }
     
-    // Add parking area
-    this.createParkingLot(world, 1, 1, 3, 2);
+    // No parking area - keep campus clean
     
     // Add flowers around buildings
     this.addFlowersAroundBuilding(world, 3, 2, 5, 4); // Around library
@@ -272,7 +240,7 @@ class CampusArea extends BaseArea {
       const tileY = Math.floor(y);
       
       if (tileX >= 0 && tileX < this.areaWidth && tileY >= 0 && tileY < this.areaHeight &&
-          world[tileY][tileX].type === 'grass') {
+          world[tileY][tileX].type === 'grass' && world[tileY][tileX].buildingType !== 'drillfield') {
         world[tileY][tileX] = { type: 'tree', solid: true };
       }
     }
@@ -280,7 +248,7 @@ class CampusArea extends BaseArea {
 
   private addBench(world: any[][], x: number, y: number): void {
     if (x >= 0 && x < this.areaWidth && y >= 0 && y < this.areaHeight &&
-        world[y][x].type === 'grass') {
+        world[y][x].type === 'grass' && world[y][x].buildingType !== 'drillfield') {
       world[y][x] = { type: 'bench', solid: true };
     }
   }
@@ -296,11 +264,11 @@ class CampusArea extends BaseArea {
   }
 
   private addFlowersAroundBuilding(world: any[][], x: number, y: number, width: number, height: number): void {
-    // Add flowers around the perimeter of buildings
+    // Add flowers around the perimeter of buildings (avoid drillfield)
     for (let fx = x - 1; fx <= x + width; fx++) {
       for (let fy = y - 1; fy <= y + height; fy++) {
         if (fx >= 0 && fx < this.areaWidth && fy >= 0 && fy < this.areaHeight &&
-            world[fy][fx].type === 'grass' && Math.random() < 0.3) {
+            world[fy][fx].type === 'grass' && world[fy][fx].buildingType !== 'drillfield' && Math.random() < 0.3) {
           world[fy][fx] = { type: 'flower', solid: false };
         }
       }
@@ -342,31 +310,16 @@ class CampusArea extends BaseArea {
   }
 
   protected renderBuildingTile(ctx: CanvasRenderingContext2D, tile: any, x: number, y: number): void {
-    // Virginia Tech's signature Hokie Stone buildings
+    // All campus buildings use uniform color
     const buildingType = tile.buildingType;
     
-    // Base Hokie Stone color
-    let baseColor = '#C4A484';
+    // Uniform campus building color
+    let baseColor = '#75787b';
     let accentColor = '#8B0000';
     
-    // Different building types
-    switch (buildingType) {
-      case 'burruss':
-        baseColor = '#D4B896';
-        accentColor = '#8B0000';
-        break;
-      case 'turner':
-        baseColor = '#C4A484';
-        accentColor = '#FF8C00';
-        break;
-      case 'torgersen':
-        baseColor = '#E8DCC6'; // Light limestone color matching the image
-        accentColor = '#D4C4A8';
-        break;
-      default:
-        baseColor = '#C4A484';
-        accentColor = '#8B0000';
-    }
+    // All building types use the same colors - no accent colors
+    baseColor = '#75787b';
+    accentColor = '#85888b'; // Use texture color instead of colored accents
     
     // Specialized rendering for different building types
     if (buildingType === 'torgersen') {
@@ -378,14 +331,14 @@ class CampusArea extends BaseArea {
       ctx.fillStyle = baseColor;
       ctx.fillRect(x, y, this.tileSize, this.tileSize);
       
-      // Stone texture
-      ctx.fillStyle = '#9A8870';
+      // Stone texture pattern (like Torgersen)
+      ctx.fillStyle = accentColor; // Use texture color instead of colored accent
+      ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+      
+      // Stone texture lines
+      ctx.fillStyle = '#65686b';
       ctx.fillRect(x, y + 8, this.tileSize, 2);
       ctx.fillRect(x + 8, y, 2, this.tileSize);
-      
-      // VT color accents
-      ctx.fillStyle = accentColor;
-      ctx.fillRect(x + 1, y + 1, this.tileSize - 2, 3);
     }
   }
 
@@ -395,11 +348,11 @@ class CampusArea extends BaseArea {
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Gothic stone block pattern
-    ctx.fillStyle = '#F5F0E8'; // Lighter limestone highlight
+    ctx.fillStyle = '#85888b'; // Lighter version of base color
     ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     
     // Stone block outlines (creating the ashlar masonry pattern)
-    ctx.strokeStyle = '#C8B99C'; // Darker mortar lines
+    ctx.strokeStyle = '#65686b'; // Consistent mortar lines
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, this.tileSize, this.tileSize);
     
@@ -416,23 +369,10 @@ class CampusArea extends BaseArea {
     ctx.lineTo(x + this.tileSize / 2 + (offset * this.tileSize / 4), y + this.tileSize);
     ctx.stroke();
     
-    // Gothic architectural details - arched window patterns for some tiles
-    if ((x + y) % (this.tileSize * 3) === 0) {
-      // Create Gothic arch pattern
-      ctx.fillStyle = '#4A4A4A';
-      ctx.beginPath();
-      ctx.arc(x + this.tileSize / 2, y + this.tileSize - 4, 6, Math.PI, 0);
-      ctx.fill();
-      
-      // Window glass
-      ctx.fillStyle = '#87CEEB';
-      ctx.beginPath();
-      ctx.arc(x + this.tileSize / 2, y + this.tileSize - 4, 4, Math.PI, 0);
-      ctx.fill();
-    }
+    // No Gothic details - keep building clean and simple
     
     // Stone weathering and texture details
-    ctx.fillStyle = '#DDD4C0';
+    ctx.fillStyle = '#85888b';
     ctx.fillRect(x + 1, y + 1, 2, this.tileSize - 2);
     ctx.fillRect(x + this.tileSize - 3, y + 1, 2, this.tileSize - 2);
     
@@ -445,8 +385,8 @@ class CampusArea extends BaseArea {
   private renderBurrussTile(ctx: CanvasRenderingContext2D, tile: any, x: number, y: number, baseColor: string, accentColor: string): void {
     const part = tile.part || 'center';
     
-    // Base limestone color for Burruss Hall
-    ctx.fillStyle = '#E8DCC6'; // Light limestone like in the image
+    // Use uniform campus building color
+    ctx.fillStyle = baseColor;
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Different rendering based on building part
@@ -471,27 +411,17 @@ class CampusArea extends BaseArea {
 
   private renderBurrussTower(ctx: CanvasRenderingContext2D, x: number, y: number, part: string): void {
     // Tower base
-    ctx.fillStyle = '#E8DCC6'; // Light limestone
+    ctx.fillStyle = '#75787b'; // Uniform campus color
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Stone block pattern
-    ctx.fillStyle = '#F5F0E8'; // Lighter highlight
+    ctx.fillStyle = '#85888b'; // Lighter version of base color
     ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     
-    // Gothic arched windows
-    if ((y % (this.tileSize * 2)) === 0) {
-      ctx.fillStyle = '#2F2F2F'; // Dark window frame
-      ctx.fillRect(x + 4, y + 6, this.tileSize - 8, this.tileSize - 8);
-      
-      // Window glass with Gothic arch
-      ctx.fillStyle = '#4A90E2'; // Blue glass
-      ctx.beginPath();
-      ctx.arc(x + this.tileSize / 2, y + this.tileSize - 4, 4, Math.PI, 0);
-      ctx.fill();
-    }
+    // No windows - keep building clean and simple
     
     // Stone courses (horizontal lines)
-    ctx.strokeStyle = '#D4C4A8';
+    ctx.strokeStyle = '#65686b';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, y + this.tileSize / 3);
@@ -513,11 +443,11 @@ class CampusArea extends BaseArea {
 
   private renderBurrussTowerTop(ctx: CanvasRenderingContext2D, x: number, y: number, part: string): void {
     // Crenellated tower top (castle battlements)
-    ctx.fillStyle = '#E8DCC6';
+    ctx.fillStyle = '#75787b';
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Crenellation pattern (merlons and crenels)
-    ctx.fillStyle = '#F5F0E8';
+    ctx.fillStyle = '#85888b';
     const crenelWidth = this.tileSize / 4;
     for (let i = 0; i < 4; i++) {
       if (i % 2 === 0) { // Merlons (raised parts)
@@ -538,34 +468,24 @@ class CampusArea extends BaseArea {
     }
     
     // Stone detail
-    ctx.strokeStyle = '#D4C4A8';
+    ctx.strokeStyle = '#65686b';
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, this.tileSize, this.tileSize);
   }
 
   private renderBurrussCenter(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     // Central building connecting towers
-    ctx.fillStyle = '#E8DCC6';
+    ctx.fillStyle = '#75787b';
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Central Gothic arch detail
-    ctx.fillStyle = '#F5F0E8';
+    ctx.fillStyle = '#85888b';
     ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     
-    // Gothic arched detail
-    ctx.fillStyle = '#2F2F2F';
-    ctx.beginPath();
-    ctx.arc(x + this.tileSize / 2, y + this.tileSize - 2, 6, Math.PI, 0);
-    ctx.fill();
-    
-    // Window glass
-    ctx.fillStyle = '#4A90E2';
-    ctx.beginPath();
-    ctx.arc(x + this.tileSize / 2, y + this.tileSize - 2, 4, Math.PI, 0);
-    ctx.fill();
+    // No Gothic details - keep building clean and simple
     
     // Decorative stonework
-    ctx.strokeStyle = '#D4C4A8';
+    ctx.strokeStyle = '#65686b';
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, this.tileSize, this.tileSize);
     
@@ -578,14 +498,14 @@ class CampusArea extends BaseArea {
 
   private renderBurrussDefault(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     // Default Burruss stone pattern
-    ctx.fillStyle = '#E8DCC6';
+    ctx.fillStyle = '#75787b';
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
-    ctx.fillStyle = '#F5F0E8';
+    ctx.fillStyle = '#85888b';
     ctx.fillRect(x + 1, y + 1, this.tileSize - 2, this.tileSize - 2);
     
     // Stone texture
-    ctx.strokeStyle = '#D4C4A8';
+    ctx.strokeStyle = '#65686b';
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, this.tileSize, this.tileSize);
   }
@@ -679,19 +599,19 @@ class CampusArea extends BaseArea {
   }
 
   private renderDrillfieldTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-    // Base drillfield green - slightly different from regular grass
-    ctx.fillStyle = '#2d4a2b'; // Darker, richer green for well-maintained field
+    // Base drillfield green - bright vibrant green for open field
+    ctx.fillStyle = '#58b438'; // Bright vibrant green for well-maintained field
     ctx.fillRect(x, y, this.tileSize, this.tileSize);
     
     // Add subtle texture pattern to show it's maintained grass
-    ctx.fillStyle = '#3a5c37'; // Slightly lighter green for texture
+    ctx.fillStyle = '#6bc248'; // Slightly lighter green for texture
     const pattern = (x + y) % 8;
     if (pattern < 2) {
       ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
     }
     
     // Add some subtle grass blade details
-    ctx.fillStyle = '#4a7247';
+    ctx.fillStyle = '#7ed058';
     for (let i = 0; i < 3; i++) {
       const grassX = x + (i * 10) + 3;
       const grassY = y + ((x + y + i) % 8) + 8;
@@ -700,7 +620,7 @@ class CampusArea extends BaseArea {
     
     // Very subtle grid pattern to show it's a formal field
     if ((Math.floor(x / this.tileSize) + Math.floor(y / this.tileSize)) % 4 === 0) {
-      ctx.fillStyle = '#1e3a1c';
+      ctx.fillStyle = '#4a9c30';
       ctx.fillRect(x, y, this.tileSize, 1); // Horizontal line
       ctx.fillRect(x, y, 1, this.tileSize); // Vertical line
     }
