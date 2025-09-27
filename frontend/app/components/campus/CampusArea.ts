@@ -190,7 +190,56 @@ class CampusArea extends BaseArea {
   }
 
   private generateCampusPaths(world: any[][]): void {
-    // No paths - campus has only grass and buildings
+    // Create road network connecting buildings: Turner → Burruss → Torgersen → Cassell → Prichard → Turner
+    this.createCampusRoads(world);
+  }
+
+  private createCampusRoads(world: any[][]): void {
+    // Road 1: Turner → Burruss (horizontal path north of drillfield)
+    this.createRoad(world, 8, 6, 15, 6); // from Turner exit to Burruss entrance
+    
+    // Road 2: Burruss → Torgersen (horizontal path north of drillfield)  
+    this.createRoad(world, 15, 6, 20, 6); // from Burruss to Torgersen
+    
+    // Road 3: Torgersen → Cassell (vertical path east of drillfield, then horizontal)
+    this.createRoad(world, 20, 6, 20, 11); // vertical down from Torgersen
+    this.createRoad(world, 20, 11, 21, 11); // horizontal to Cassell entrance
+    
+    // Road 4: Cassell → Prichard (horizontal path south of drillfield)
+    this.createRoad(world, 17, 13, 7, 13); // from Cassell to Prichard area
+    
+    // Road 5: Prichard → Turner (vertical path west of drillfield)
+    this.createRoad(world, 6, 13, 6, 6); // vertical up from Prichard to Turner level
+    this.createRoad(world, 6, 6, 8, 6); // horizontal to connect back to Turner
+  }
+
+  private createRoad(world: any[][], startX: number, startY: number, endX: number, endY: number): void {
+    // Create a straight line road between two points (1 pixel width)
+    if (startX === endX) {
+      // Vertical road
+      const minY = Math.min(startY, endY);
+      const maxY = Math.max(startY, endY);
+      for (let y = minY; y <= maxY; y++) {
+        if (startX >= 0 && startX < this.areaWidth && y >= 0 && y < this.areaHeight) {
+          // Only place road if it's on grass and not on drillfield or buildings
+          if (world[y][startX].type === 'grass' && world[y][startX].buildingType !== 'drillfield') {
+            world[y][startX] = { type: 'road', solid: false };
+          }
+        }
+      }
+    } else {
+      // Horizontal road
+      const minX = Math.min(startX, endX);
+      const maxX = Math.max(startX, endX);
+      for (let x = minX; x <= maxX; x++) {
+        if (x >= 0 && x < this.areaWidth && startY >= 0 && startY < this.areaHeight) {
+          // Only place road if it's on grass and not on drillfield or buildings
+          if (world[startY][x].type === 'grass' && world[startY][x].buildingType !== 'drillfield') {
+            world[startY][x] = { type: 'road', solid: false };
+          }
+        }
+      }
+    }
   }
 
   private createPathToDoor(world: any[][], startX: number, startY: number, direction: 'horizontal' | 'vertical'): void {
@@ -302,6 +351,12 @@ class CampusArea extends BaseArea {
     // Special rendering for drillfield
     if (tile.type === 'grass' && tile.buildingType === 'drillfield') {
       this.renderDrillfieldTile(ctx, x, y);
+      return;
+    }
+    
+    // Special rendering for campus roads
+    if (tile.type === 'road') {
+      this.renderCampusRoadTile(ctx, x, y);
       return;
     }
     
@@ -596,6 +651,23 @@ class CampusArea extends BaseArea {
     
     // Reset shadow
     ctx.shadowBlur = 0;
+  }
+
+  private renderCampusRoadTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    // Bright grey road surface (1 pixel wide appearance)
+    ctx.fillStyle = '#C0C0C0'; // Bright grey color as requested
+    ctx.fillRect(x, y, this.tileSize, this.tileSize);
+    
+    // Add subtle texture to make it look like concrete/asphalt
+    ctx.fillStyle = '#D0D0D0'; // Slightly lighter grey for texture
+    ctx.fillRect(x + 2, y + 2, this.tileSize - 4, this.tileSize - 4);
+    
+    // Very subtle edges to define the road
+    ctx.fillStyle = '#B0B0B0'; // Slightly darker edge
+    ctx.fillRect(x, y, this.tileSize, 1); // Top edge
+    ctx.fillRect(x, y + this.tileSize - 1, this.tileSize, 1); // Bottom edge
+    ctx.fillRect(x, y, 1, this.tileSize); // Left edge
+    ctx.fillRect(x + this.tileSize - 1, y, 1, this.tileSize); // Right edge
   }
 
   private renderDrillfieldTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
