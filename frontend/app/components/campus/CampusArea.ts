@@ -316,6 +316,9 @@ class CampusArea extends BaseArea {
     ctx.fillStyle = '#FF8C00';
     ctx.font = '12px serif';
     ctx.fillText('HOKIES!', 10 - this.cameraX, 50 - this.cameraY);
+    
+    // Building name signs
+    this.renderBuildingSigns(ctx);
   }
 
   // Override tile rendering for campus-specific styling
@@ -566,6 +569,122 @@ class CampusArea extends BaseArea {
     ctx.strokeStyle = '#D4C4A8';
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, this.tileSize, this.tileSize);
+  }
+
+  private renderBuildingSigns(ctx: CanvasRenderingContext2D): void {
+    // Reset shadow effects
+    ctx.shadowBlur = 0;
+    
+    // Burruss Hall sign (building at x: 9-14, y: 1-6)
+    const burrussX = 12 * this.tileSize; // Center of 6-tile wide building
+    const burrussY = 1 * this.tileSize - 15; // Above the building
+    
+    // Burruss sign background
+    ctx.fillStyle = '#8B0000'; // VT Maroon background
+    ctx.fillRect(burrussX - 45 - this.cameraX, burrussY - this.cameraY, 90, 12);
+    
+    // Burruss text
+    ctx.fillStyle = '#FF8C00'; // VT Orange text
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BURRUSS HALL', burrussX - this.cameraX, burrussY + 8 - this.cameraY);
+    
+    // Turner Library sign (building at x: 3-7, y: 2-5)
+    const turnerX = 5.5 * this.tileSize; // Center of 5-tile wide building
+    const turnerY = 2 * this.tileSize - 15; // Above the building
+    
+    // Turner sign background
+    ctx.fillStyle = '#2E4057'; // Academic blue background
+    ctx.fillRect(turnerX - 40 - this.cameraX, turnerY - this.cameraY, 80, 12);
+    
+    // Turner text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TURNER LIBRARY', turnerX - this.cameraX, turnerY + 8 - this.cameraY);
+    
+    // Torgersen Hall sign (building at x: 16-23, y: 1-5)
+    const torgersenX = 20 * this.tileSize; // Center of 8-tile wide building
+    const torgersenY = 1 * this.tileSize - 15; // Above the building
+    
+    // Torgersen sign background
+    ctx.fillStyle = '#4A5568'; // Engineering gray background
+    ctx.fillRect(torgersenX - 50 - this.cameraX, torgersenY - this.cameraY, 100, 12);
+    
+    // Torgersen text
+    ctx.fillStyle = '#FFD700'; // Gold text
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TORGERSEN HALL', torgersenX - this.cameraX, torgersenY + 8 - this.cameraY);
+    
+    // War Memorial Chapel sign (building at x: 5-7, y: 8-10)
+    const chapelX = 6.5 * this.tileSize; // Center of 3-tile wide building
+    const chapelY = 8 * this.tileSize - 15; // Above the building
+    
+    // Chapel sign background
+    ctx.fillStyle = '#4A4A4A'; // Solemn gray background
+    ctx.fillRect(chapelX - 45 - this.cameraX, chapelY - this.cameraY, 90, 12);
+    
+    // Chapel text
+    ctx.fillStyle = '#F7FAFC'; // Light text
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WAR MEMORIAL CHAPEL', chapelX - this.cameraX, chapelY + 8 - this.cameraY);
+    
+    // Squires Student Center sign (building at x: 12-16, y: 8-11)
+    const squiresX = 14.5 * this.tileSize; // Center of 5-tile wide building
+    const squiresY = 8 * this.tileSize - 15; // Above the building
+    
+    // Squires sign background
+    ctx.fillStyle = '#38A169'; // Student life green background
+    ctx.fillRect(squiresX - 50 - this.cameraX, squiresY - this.cameraY, 100, 12);
+    
+    // Squires text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SQUIRES STUDENT CENTER', squiresX - this.cameraX, squiresY + 8 - this.cameraY);
+    
+    // Owens Hall sign (building at x: 1-6, y: 13-16)
+    const owensX = 4 * this.tileSize; // Center of 6-tile wide building
+    const owensY = 13 * this.tileSize - 15; // Above the building
+    
+    // Owens sign background
+    ctx.fillStyle = '#D69E2E'; // Dining hall orange background
+    ctx.fillRect(owensX - 35 - this.cameraX, owensY - this.cameraY, 70, 12);
+    
+    // Owens text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('OWENS HALL', owensX - this.cameraX, owensY + 8 - this.cameraY);
+    
+    // Cassell Coliseum sign (building at x: 18-23, y: 12-16)
+    const cassellX = 21 * this.tileSize; // Center of 6-tile wide building
+    const cassellY = 12 * this.tileSize - 15; // Above the building
+    
+    // Cassell sign background
+    ctx.fillStyle = '#8B0000'; // VT Maroon background
+    ctx.fillRect(cassellX - 50 - this.cameraX, cassellY - this.cameraY, 100, 12);
+    
+    // Cassell text
+    ctx.fillStyle = '#FF8C00'; // VT Orange text
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('CASSELL COLISEUM', cassellX - this.cameraX, cassellY + 8 - this.cameraY);
+    
+    // Add glow effect for special buildings
+    ctx.shadowColor = '#FF8C00';
+    ctx.shadowBlur = 6;
+    
+    // Re-render Burruss and Cassell text with glow (iconic VT buildings)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText('BURRUSS HALL', burrussX - this.cameraX, burrussY + 8 - this.cameraY);
+    ctx.fillText('CASSELL COLISEUM', cassellX - this.cameraX, cassellY + 8 - this.cameraY);
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
   }
 }
 
