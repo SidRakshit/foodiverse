@@ -97,7 +97,7 @@ class GameEngine {
     if (this.sceneManager.getCurrentSceneType() === 'campus') {
       this.ctx.fillStyle = '#FF8C00';
       this.ctx.font = '10px monospace';
-      this.ctx.fillText('Walk to building doors to enter!', 10, 580);
+      this.ctx.fillText('Stand directly on building doors to enter!', 10, 580);
     } else {
       this.ctx.fillStyle = '#32CD32';
       this.ctx.font = '10px monospace';

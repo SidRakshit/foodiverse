@@ -96,25 +96,18 @@ class SceneManager {
     const playerTileX = Math.floor(this.player.x / 32);
     const playerTileY = Math.floor(this.player.y / 32);
 
-    // Check surrounding tiles for doors
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const tileX = playerTileX + dx;
-        const tileY = playerTileY + dy;
-        
-        const tile = world.getTileAt && world.getTileAt(tileX, tileY);
-        if (tile && tile.type === 'door') {
-          const buildingType = tile.buildingType;
-          console.log('🚪 Found door! Building type:', buildingType, 'at tile:', {tileX, tileY});
-          
-          if (buildingType && this.scenes.has(buildingType as SceneType)) {
-            console.log('✅ Entering building:', buildingType);
-            this.switchScene(buildingType as SceneType);
-            return;
-          } else {
-            console.log('❌ Building type not recognized:', buildingType, 'Available scenes:', Array.from(this.scenes.keys()));
-          }
-        }
+    // Only check the exact tile the player is standing on for doors
+    const tile = world.getTileAt && world.getTileAt(playerTileX, playerTileY);
+    if (tile && tile.type === 'door') {
+      const buildingType = tile.buildingType;
+      console.log('🚪 Found door! Building type:', buildingType, 'at tile:', {playerTileX, playerTileY});
+      
+      if (buildingType && this.scenes.has(buildingType as SceneType)) {
+        console.log('✅ Entering building:', buildingType);
+        this.switchScene(buildingType as SceneType);
+        return;
+      } else {
+        console.log('❌ Building type not recognized:', buildingType, 'Available scenes:', Array.from(this.scenes.keys()));
       }
     }
   }
