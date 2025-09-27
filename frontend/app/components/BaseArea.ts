@@ -2,7 +2,7 @@ import Player from './Player';
 import { Scene, SceneType } from './types';
 
 interface AreaTile {
-  type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'grass' | 'road' | 'sidewalk' | 'building' | 'parking';
+  type: 'floor' | 'wall' | 'door' | 'furniture' | 'window' | 'stairs' | 'elevator' | 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'tree' | 'house' | 'apartment' | 'restaurant' | 'shop';
   solid: boolean;
   furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
   buildingType?: string;

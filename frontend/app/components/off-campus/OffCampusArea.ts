@@ -2,9 +2,10 @@ import BaseArea from '../BaseArea';
 import { SceneType } from '../types';
 
 interface OffCampusTile {
-  type: 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'tree' | 'house' | 'apartment' | 'restaurant' | 'shop' | 'door';
+  type: 'grass' | 'road' | 'sidewalk' | 'building' | 'parking' | 'tree' | 'house' | 'apartment' | 'restaurant' | 'shop' | 'door' | 'floor' | 'wall' | 'furniture' | 'window' | 'stairs' | 'elevator';
   solid: boolean;
-  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'hotel' | 'downtown';
+  buildingType?: 'apartment' | 'restaurant' | 'shop' | 'bank' | 'gas_station' | 'hotel' | 'downtown' | 'tots' | 'hokiehouse' | 'centros';
+  furniture?: 'desk' | 'chair' | 'bookshelf' | 'computer' | 'table' | 'couch' | 'plant' | 'car' | 'bench';
 }
 
 class OffCampusArea extends BaseArea {
@@ -43,15 +44,15 @@ class OffCampusArea extends BaseArea {
     }
 
     // Downtown buildings along Main Street
-    this.createCommercialBuilding(world, 2, 6, 3, 2, 'restaurant'); // Restaurant
+    this.createCommercialBuilding(world, 2, 6, 3, 2, 'tots'); // Tots Restaurant
     this.createCommercialBuilding(world, 6, 6, 2, 2, 'shop'); // Shop
-    this.createCommercialBuilding(world, 9, 6, 3, 2, 'bank'); // Bank
+    this.createCommercialBuilding(world, 9, 6, 3, 2, 'hokiehouse'); // Hokie House
     this.createCommercialBuilding(world, 13, 6, 2, 2, 'shop'); // Another shop
     this.createCommercialBuilding(world, 16, 6, 4, 2, 'hotel'); // Hotel
 
     // Buildings on south side of Main Street
     this.createCommercialBuilding(world, 3, 11, 2, 2, 'gas_station'); // Gas station
-    this.createCommercialBuilding(world, 7, 11, 3, 2, 'restaurant'); // Another restaurant
+    this.createCommercialBuilding(world, 7, 11, 3, 2, 'centros'); // Centros Restaurant
     this.createCommercialBuilding(world, 12, 11, 4, 2, 'shop'); // Large shop
     this.createCommercialBuilding(world, 17, 11, 3, 2, 'restaurant'); // Restaurant
   }
