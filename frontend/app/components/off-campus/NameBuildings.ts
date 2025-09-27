@@ -147,13 +147,8 @@ class NameBuildings extends BaseArea {
     ctx.fillStyle = '#2F4F4F';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('🏙️ DOWNTOWN BLACKSBURG', 10 - this.cameraX, 30 - this.cameraY);
-    
-    // Add downtown elements
-    ctx.fillStyle = '#FF6B6B';
-    ctx.font = '12px sans-serif';
-    ctx.fillText('Shops • Restaurants • Apartments', 10 - this.cameraX, 50 - this.cameraY);
-    
+    ctx.fillText('🏙️ DOWNTOWN BLACKSBURG', 300 - this.cameraX, 30 - this.cameraY);
+   
     // Building name signs
     this.renderBuildingSigns(ctx);
   }

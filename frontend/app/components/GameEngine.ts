@@ -79,23 +79,8 @@ class GameEngine {
     // Render player
     const cameraPos = this.sceneManager.getCameraPosition();
     this.player.render(this.ctx, cameraPos.x, cameraPos.y);
-    
-    // Render UI
-    this.renderUI();
   }
 
-  private renderUI(): void {
-    // Show entrance instructions when near door
-    if (this.sceneManager.getCurrentSceneType() === 'campus') {
-      this.ctx.fillStyle = '#FF8C00';
-      this.ctx.font = '10px monospace';
-      this.ctx.fillText('Stand directly on building doors to enter!', 10, 580);
-    } else {
-      this.ctx.fillStyle = '#32CD32';
-      this.ctx.font = '10px monospace';
-      this.ctx.fillText('Walk to green EXIT area to leave building', 10, 580);
-    }
-  }
 }
 
 export default GameEngine;
