@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth");
 const listingsRoutes = require("./routes/listings");
 const leaderboardRoutes = require("./routes/leaderboard");
 const recipeRoutes = require("./routes/recipes");
+const jakeRoutes = require("./routes/jake");
 
 
 dotenv.config();
@@ -17,6 +18,7 @@ app.use("/auth", authRoutes);
 app.use("/listings", listingsRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/recipes", recipeRoutes);
+app.use("/jake", jakeRoutes);
 
 
 

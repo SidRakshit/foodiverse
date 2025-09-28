@@ -294,7 +294,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// Claim item (legacy support)
+// Claim item - now deletes the item immediately
 router.put("/:id/claim", async (req, res) => {
   try {
     const { id } = req.params;
@@ -303,32 +303,17 @@ router.put("/:id/claim", async (req, res) => {
     if (listing.rows.length === 0)
       return res.status(404).json({ error: "Listing not found" });
     if (listing.rows[0].status !== "available")
-      return res.status(400).json({ error: "Listing already claimed/completed" });
+      return res.status(400).json({ error: "Listing already claimed" });
 
-    await pool.query("UPDATE listings SET status='claimed' WHERE id=$1", [id]);
-    res.json({ message: "Listing claimed successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Complete item (legacy support)
-router.put("/:id/complete", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const listing = await pool.query("SELECT * FROM listings WHERE id=$1", [id]);
+    // Delete the item instead of just marking as claimed
+    await pool.query("DELETE FROM listings WHERE id=$1", [id]);
     
-    if (listing.rows.length === 0)
-      return res.status(404).json({ error: "Listing not found" });
-    if (listing.rows[0].status !== "claimed")
-      return res.status(400).json({ error: "Listing must be claimed first" });
-
-    await pool.query("UPDATE listings SET status='completed' WHERE id=$1", [id]);
+    // Award points to the original poster
     await pool.query("UPDATE users SET points = points + 10 WHERE id=$1", [
       listing.rows[0].user_id,
     ]);
-    res.json({ message: "Transaction completed, points awarded" });
+    
+    res.json({ message: "Item claimed and removed successfully, points awarded to original poster" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
