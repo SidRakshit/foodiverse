@@ -47,7 +47,8 @@ class ApiService {
   private isOffline: boolean = false;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    // Use relative paths for Vercel deployment, fallback to localhost for development
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.origin ? '/api' : 'http://localhost:8080');
     console.log('🔗 ApiService initialized with baseUrl:', this.baseUrl);
   }
 

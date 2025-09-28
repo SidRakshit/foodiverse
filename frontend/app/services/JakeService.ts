@@ -16,7 +16,7 @@ class JakeService {
   private conversationHistory: JakeMessage[] = [];
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.origin ? '/api' : 'http://localhost:8080');
   }
 
   async chatWithJake(playerMessage: string): Promise<string> {

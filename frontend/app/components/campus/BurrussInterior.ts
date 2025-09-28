@@ -61,17 +61,10 @@ class BurrussInterior extends BaseBuildingInterior {
     // Burruss Hall specific elements
     
     // VT seal/logo in center
-    ctx.fillStyle = '#8B0000'; // Maroon
-    ctx.fillCircle = function(x, y, radius) {
-      this.beginPath();
-      this.arc(x, y, radius, 0, 2 * Math.PI);
-      this.fill();
-    };
-    
     const centerX = 400 - this.cameraX;
     const centerY = 200 - this.cameraY;
     
-    ctx.fillStyle = '#8B0000';
+    ctx.fillStyle = '#8B0000'; // Maroon
     ctx.beginPath();
     ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
     ctx.fill();

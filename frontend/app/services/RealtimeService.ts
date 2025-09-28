@@ -10,7 +10,8 @@ export class RealtimeService {
   private baseUrl: string;
 
   private constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    // Use relative paths for Vercel deployment, fallback to localhost for development
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.origin ? '/api' : 'http://localhost:8080');
     if (typeof window !== 'undefined') {
       console.log('🔗 RealtimeService using baseUrl:', this.baseUrl);
     }
@@ -24,36 +25,34 @@ export class RealtimeService {
   }
 
   connect() {
-    if (this.eventSource) return;
-    try {
-      this.eventSource = new EventSource(`${this.baseUrl}/events`);
+    if (this.isConnected) return;
+    
+    // Use polling instead of SSE for serverless compatibility
+    this.isConnected = true;
+    this.emitLocal('connection', { connected: true });
+    
+    // Start polling for updates every 30 seconds
+    this.startPolling();
+  }
 
-      this.eventSource.onopen = () => {
-        this.isConnected = true;
-        this.emitLocal('connection', { connected: true });
-      };
-
-      this.eventSource.onerror = () => {
+  private startPolling() {
+    const poll = async () => {
+      try {
+        const response = await fetch(`${this.baseUrl}/events/ping`);
+        if (response.ok) {
+          const data = await response.json();
+          this.emitLocal('ping', data);
+        }
+      } catch (error) {
+        console.warn('Polling failed:', error);
         this.isConnected = false;
         this.emitLocal('connection', { connected: false });
-      };
+      }
+    };
 
-      const subscribe = (evt: string) => {
-        this.eventSource!.addEventListener(evt, (e: MessageEvent) => {
-          try {
-            const data = JSON.parse(e.data);
-            this.emitLocal(evt, data);
-          } catch {
-            this.emitLocal(evt, e.data);
-          }
-        });
-      };
-
-      ['ping', 'listing_created', 'fridge_updated', 'listing_deleted', 'leaderboard_updated']
-        .forEach(subscribe);
-    } catch (e) {
-      // ignore
-    }
+    // Poll immediately, then every 30 seconds
+    poll();
+    setInterval(poll, 30000);
   }
 
   on(eventName: string, handler: EventHandler) {

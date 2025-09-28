@@ -89,7 +89,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
     const characterData = {
       selectedCharacter: CHARACTER_OPTIONS[selectedIndex],
       playerName: playerName.trim(),
-      selectedGender: selectedGender,
+      selectedGender: selectedGender || undefined,
       customPronouns: selectedGender?.id === 'custom' ? customPronouns : undefined,
       showPronouns: selectedGender ? selectedGender.id !== 'prefer-not' : false
     };
@@ -222,7 +222,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
             <p>Use ARROW KEYS or WS to select</p>
             <p>Press ENTER to confirm selection</p>
             <p>Press ESCAPE to skip gender selection</p>
-            <p className="text-orange-300 mt-2">Pronouns will be shown automatically (except "Prefer not to specify")</p>
+            <p className="text-orange-300 mt-2">Pronouns will be shown automatically (except &quot;Prefer not to specify&quot;)</p>
           </div>
         </div>
       </div>

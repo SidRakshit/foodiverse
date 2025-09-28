@@ -1,12 +1,7 @@
-const express = require("express");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const router = express.Router();
-
-// Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Jake's personality and context
 const JAKE_CONTEXT = `You are Jake, a friendly bartender at Hokie House, a popular sports bar near Virginia Tech. You're a proud VT alum who knows everything about Hokie traditions and campus life.
 
 CRITICAL: Always respond directly to what the customer says. Pay close attention to their exact words and respond appropriately.
@@ -34,21 +29,19 @@ Key traits:
 
 You're here to serve drinks and chat about VT life. Always listen carefully and respond to what they actually said!`;
 
-// Chat with Jake endpoint
-router.post("/chat", async (req, res) => {
+export async function POST(request) {
+
   try {
-    const { message, conversationHistory = [] } = req.body;
+    const { message, conversationHistory = [] } = await request.json();
     
     if (!message || !message.trim()) {
-      return res.status(400).json({ error: "Message is required" });
+      return Response.json({ error: "Message is required" }, { status: 400 });
     }
 
     console.log(`🍺 Jake received message: "${message}"`);
 
-    // Initialize the model
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    // Build conversation context
     let conversationContext = JAKE_CONTEXT + "\n\nConversation:\n";
     
     // Add previous messages if any (last 5 for context)
@@ -67,8 +60,7 @@ router.post("/chat", async (req, res) => {
 
     console.log(`🍺 Jake responds: "${jakeReply}"`);
 
-    // Return response immediately (delay is handled in frontend)
-    res.json({ 
+    return Response.json({ 
       message: jakeReply,
       sender: "Jake",
       timestamp: new Date().toISOString()
@@ -77,7 +69,6 @@ router.post("/chat", async (req, res) => {
   } catch (error) {
     console.error("Error generating Jake's response:", error);
     
-    // Fallback responses if Gemini fails
     const fallbackResponses = [
       "Hey there, Hokie! Sorry, I'm a bit distracted right now. What can I get you?",
       "Go Hokies! Sorry, didn't catch that - can you say that again?",
@@ -88,23 +79,23 @@ router.post("/chat", async (req, res) => {
     
     const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
     
-    res.json({
+    return Response.json({
       message: fallback,
       sender: "Jake",
       timestamp: new Date().toISOString(),
       fallback: true
     });
   }
-});
+}
 
-// Get Jake's status (for debugging)
-router.get("/status", (req, res) => {
-  res.json({
-    name: "Jake the Bartender",
-    status: "Ready to chat!",
-    personality: "Friendly Hokie bartender",
-    geminiConfigured: !!process.env.GEMINI_API_KEY
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,OPTIONS,POST',
+      'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    }
   });
-});
-
-module.exports = router;
+}

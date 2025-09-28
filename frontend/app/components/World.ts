@@ -59,8 +59,7 @@ class World implements Scene {
       ctx.translate(-this.cameraX, -cameraTop);
       
       // Create a temporary player position for off-campus rendering
-      const tempPlayer = { ...player };
-      this.offCampusArea.render(ctx, tempPlayer);
+      this.offCampusArea.render(ctx, player);
       ctx.restore();
     }
 
@@ -70,9 +69,8 @@ class World implements Scene {
       // Translate to show campus area
       ctx.translate(-this.cameraX, areaHeightPixels - cameraTop);
       
-      // Create a temporary player position for campus rendering (adjust Y)
-      const tempPlayer = { ...player, y: player.y - areaHeightPixels };
-      this.campusArea.render(ctx, tempPlayer);
+      // Pass the player directly and let render method handle position
+      this.campusArea.render(ctx, player);
       ctx.restore();
     }
 
