@@ -162,16 +162,18 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
 
   if (isEnteringCustomPronouns) {
     return (
-      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="custom-pronouns-title">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-8 text-orange-400">ENTER CUSTOM PRONOUNS</h1>
+          <h1 id="custom-pronouns-title" className="text-4xl font-bold mb-8 text-orange-400">ENTER CUSTOM PRONOUNS</h1>
           <div className="mb-8">
             {renderCharacterPreview(CHARACTER_OPTIONS[selectedIndex], 8)}
           </div>
-          <div className="text-2xl mb-4">
+          <div className="text-2xl mb-4" aria-live="polite">
             <span className="text-gray-400">Pronouns: </span>
             <span className="text-white">{customPronouns}</span>
-            <span className="animate-pulse">|</span>
+            <span className="animate-pulse" aria-hidden>
+              |
+            </span>
           </div>
           <div className="text-gray-400 text-sm">
             <p>Enter your pronouns (e.g., xe/xir, ze/zir)</p>
@@ -185,9 +187,9 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
 
   if (isSelectingGender) {
     return (
-      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="gender-title">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-8 text-orange-400">CHOOSE GENDER (OPTIONAL)</h1>
+          <h1 id="gender-title" className="text-4xl font-bold mb-8 text-orange-400">CHOOSE GENDER (OPTIONAL)</h1>
           <div className="mb-8">
             {renderCharacterPreview(CHARACTER_OPTIONS[selectedIndex], 8)}
           </div>
@@ -197,6 +199,9 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
               {GENDER_OPTIONS.map((gender, index) => (
                 <div
                   key={gender.id}
+                  role="button"
+                  aria-pressed={selectedGenderIndex === index}
+                  tabIndex={0}
                   className={`p-3 border-2 rounded-lg transition-all text-left ${
                     selectedGenderIndex === index
                       ? 'border-orange-400 bg-orange-900 bg-opacity-20'
@@ -226,9 +231,9 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
 
   if (isEnteringName) {
     return (
-      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="character-selection min-h-screen bg-black text-white flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="name-title">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-8 text-orange-400">ENTER YOUR NAME</h1>
+          <h1 id="name-title" className="text-4xl font-bold mb-8 text-orange-400">ENTER YOUR NAME</h1>
           <div className="mb-8">
             {renderCharacterPreview(CHARACTER_OPTIONS[selectedIndex], 8)}
           </div>
@@ -254,10 +259,12 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
             </div>
           )}
 
-          <div className="text-2xl mb-4">
+          <div className="text-2xl mb-4" aria-live="polite">
             <span className="text-gray-400">Name: </span>
             <span className="text-white">{playerName}</span>
-            <span className="animate-pulse">|</span>
+            <span className="animate-pulse" aria-hidden>
+              |
+            </span>
           </div>
           <div className="text-gray-400 text-sm">
             <p>Type your name and press ENTER to start</p>
@@ -278,6 +285,9 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
           {CHARACTER_OPTIONS.map((character, index) => (
             <div
               key={character.id}
+              role="button"
+              aria-pressed={selectedIndex === index}
+              tabIndex={0}
               className={`character-option p-4 border-2 rounded-lg transition-all ${
                 selectedIndex === index
                   ? 'border-orange-400 bg-orange-900 bg-opacity-20'
@@ -302,7 +312,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onCharacterSele
           <div className="text-xl text-orange-300">Character {CHARACTER_OPTIONS[selectedIndex].number}</div>
         </div>
 
-        <div className="text-gray-400 text-sm">
+        <div className="text-gray-400 text-sm" aria-live="polite">
           <p>Use ARROW KEYS or WASD to select a character</p>
           <p>Press ENTER to continue to gender selection</p>
         </div>

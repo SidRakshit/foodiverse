@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
+const { broadcast } = require("../events");
 
 const router = express.Router();
 
@@ -166,6 +167,9 @@ router.post("/", async (req, res) => {
     };
 
     res.json(newItem);
+    try {
+      broadcast('listing_created', newItem);
+    } catch {}
   } catch (err) {
     console.error("Error adding fridge item:", err);
     res.status(500).json({ error: "Failed to add fridge item" });
@@ -248,7 +252,10 @@ router.put("/", async (req, res) => {
         }
         
         await client.query('COMMIT');
-        res.json({ message: "Fridge updated successfully", items: results });
+      res.json({ message: "Fridge updated successfully", items: results });
+      try {
+        broadcast('fridge_updated', { items: results });
+      } catch {}
         
       } catch (err) {
         await client.query('ROLLBACK');
@@ -287,7 +294,10 @@ router.delete("/:id", async (req, res) => {
     const deleteQuery = "DELETE FROM listings WHERE id = $1 RETURNING *";
     const result = await pool.query(deleteQuery, [id]);
     
-    res.json({ message: "Item deleted successfully", item: result.rows[0] });
+      res.json({ message: "Item deleted successfully", item: result.rows[0] });
+      try {
+        broadcast('listing_deleted', { id });
+      } catch {}
   } catch (err) {
     console.error("Error deleting item:", err);
     res.status(500).json({ error: "Failed to delete item" });
@@ -328,6 +338,10 @@ router.put("/:id/complete", async (req, res) => {
     await pool.query("UPDATE users SET points = points + 10 WHERE id=$1", [
       listing.rows[0].user_id,
     ]);
+    try {
+      const { broadcast } = require('../events');
+      broadcast('leaderboard_updated', { user_id: listing.rows[0].user_id });
+    } catch {}
     res.json({ message: "Transaction completed, points awarded" });
   } catch (err) {
     console.error(err);

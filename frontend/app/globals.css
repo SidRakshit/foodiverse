@@ -21,6 +21,8 @@ body {
   overflow: hidden;
 }
 
+/* high-contrast theme removed */
+
 /* Pixel-perfect rendering */
 .pixelated {
   image-rendering: -moz-crisp-edges;

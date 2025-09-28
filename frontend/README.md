@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Foodiverse is a pixel-art campus world to discover and share food resources (community fridges, mutual-aid listings) with inclusive, accessible design.
 
 ## Getting Started
 
@@ -16,9 +16,28 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+Set env:
+
+```bash
+export NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Core Features
+
+- Frontend: Next.js 15 + canvas-based pixel world, keyboard-first UX
+- Backend: Express + Postgres; listings, auth, leaderboard
+- Realtime: Server-Sent Events for listings and leaderboard updates
+- Accessibility: ARIA live regions, keyboard flows, high-contrast toggle
+- DEI: Pronouns and gender options (incl. custom), community-centric
+
+## Architecture
+
+- `frontend/app/components/Game.tsx`: game loop and canvas
+- `frontend/app/components/CharacterSelection.tsx`: inclusive character creation
+- `backend/routes/listings.js`: fridge/listing CRUD, SSE broadcasts
+- `backend/events.js`: SSE hub
 
 ## Learn More
 

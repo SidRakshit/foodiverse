@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth");
 const listingsRoutes = require("./routes/listings");
 const leaderboardRoutes = require("./routes/leaderboard");
 const recipeRoutes = require("./routes/recipes");
+const { sseHandler } = require("./events");
 
 
 dotenv.config();
@@ -24,6 +25,9 @@ app.use("/recipes", recipeRoutes);
 app.get("/", (req, res) => {
   res.send("Foodiverse backend is running...");
 });
+
+// Server-Sent Events endpoint
+app.get("/events", sseHandler);
 
 // Test DB route
 app.get("/db-test", async (req, res) => {
