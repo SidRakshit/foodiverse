@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pixel World - Interactive 2D Game",
-  description: "A 2D interactive pixel-art world game built with Next.js",
+  title: "Foodiverse",
+  description: "An interactive pixel-art campus world for discovering and sharing food resources like community fridges and mutual-aid listings",
 };
 
 export default function RootLayout({
