@@ -15,6 +15,7 @@ import FoodLionInterior from './off-campus/FoodLionInterior';
 import FridgeManager from './FridgeManager';
 import { Scene, SceneType } from './types';
 import { ChatOverlay } from './ChatOverlay';
+import QuestManager from './QuestManager';
 
 class SceneManager {
   private currentScene: Scene;
@@ -73,6 +74,14 @@ class SceneManager {
 
     const oldSceneType = this.currentScene.type;
     this.currentScene = newScene;
+
+    // Track location visits for quests (only for apartment scenes)
+    const apartmentScenes: SceneType[] = ['edge', 'techterrace', 'hokiehouse', 'centros'];
+    if (apartmentScenes.includes(newSceneType) && oldSceneType !== newSceneType) {
+      const questManager = QuestManager.getInstance();
+      questManager.onLocationVisited();
+      console.log(`📜 Quest progress: Visited ${newSceneType}`);
+    }
 
     // Position player at entrance or default position
     if (entranceX !== undefined && entranceY !== undefined) {

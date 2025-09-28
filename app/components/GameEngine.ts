@@ -4,6 +4,7 @@ import InputHandler from './InputHandler';
 import SceneManager from './SceneManager';
 import FridgeManager from './FridgeManager';
 import LeaderboardManager from './LeaderboardManager';
+import QuestManager from './QuestManager';
 import { PlayerCharacter } from './CharacterData';
 import { ChatOverlay } from './ChatOverlay';
 
@@ -15,6 +16,7 @@ class GameEngine {
   private inputHandler: InputHandler;
   private chatOverlay: ChatOverlay;
   private leaderboardManager: LeaderboardManager;
+  private questManager: QuestManager;
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
   private isRunning: boolean = false;
@@ -29,6 +31,7 @@ class GameEngine {
     this.inputHandler.setCanvas(canvas); // Set canvas for mouse events
     this.chatOverlay = new ChatOverlay();
     this.leaderboardManager = LeaderboardManager.getInstance();
+    this.questManager = QuestManager.getInstance();
     this.sceneManager = new SceneManager(this.player, this.inputHandler, this.chatOverlay);
 
     // Bind the game loop
@@ -70,6 +73,9 @@ class GameEngine {
     // Handle leaderboard input BEFORE clearing input state
     this.handleLeaderboardInput();
 
+    // Check for quest expiration periodically
+    this.questManager.checkQuestExpiration();
+
     // Check scene transitions BEFORE clearing input state
     this.sceneManager.update(deltaTime);
 
@@ -84,7 +90,7 @@ class GameEngine {
   }
 
   private handleLeaderboardInput(): void {
-    // Handle keyboard toggle (L key)
+    // Handle leaderboard keyboard toggle (L key)
     if (this.inputHandler.wasKeyJustPressed('KeyL')) {
       if (this.leaderboardManager.isLeaderboardOpen()) {
         this.leaderboardManager.closeLeaderboard();
@@ -93,11 +99,52 @@ class GameEngine {
       }
     }
 
-    // Handle mouse clicks
+    // Handle quest input
+    const questHandled = this.handleQuestInput();
+
+    // Handle mouse clicks (only if quest didn't handle them)
+    if (!questHandled) {
+      const mouseClicks = this.inputHandler.getMouseClicks();
+      for (const click of mouseClicks) {
+        const leaderboardHandled = this.leaderboardManager.handleClick(click.x, click.y);
+        if (!leaderboardHandled) {
+          this.questManager.handleClick(click.x, click.y);
+        }
+      }
+    }
+  }
+
+  private handleQuestInput(): boolean {
+    // Check quest keyboard input first
+    if (this.inputHandler.wasKeyJustPressed('KeyQ')) {
+      this.questManager.handleKeyInput('KeyQ');
+      return true;
+    }
+
+    if (this.questManager.isQuestUIOpen()) {
+      if (this.inputHandler.wasKeyJustPressed('ArrowUp') || this.inputHandler.wasKeyJustPressed('KeyW')) {
+        this.questManager.handleKeyInput('ArrowUp');
+        return true;
+      }
+      if (this.inputHandler.wasKeyJustPressed('ArrowDown') || this.inputHandler.wasKeyJustPressed('KeyS')) {
+        this.questManager.handleKeyInput('ArrowDown');
+        return true;
+      }
+      if (this.inputHandler.wasKeyJustPressed('Escape')) {
+        this.questManager.handleKeyInput('Escape');
+        return true;
+      }
+    }
+
+    // Handle quest mouse clicks
     const mouseClicks = this.inputHandler.getMouseClicks();
     for (const click of mouseClicks) {
-      this.leaderboardManager.handleClick(click.x, click.y);
+      if (this.questManager.handleClick(click.x, click.y)) {
+        return true;
+      }
     }
+
+    return false;
   }
 
   private render(): void {
@@ -112,15 +159,17 @@ class GameEngine {
     const cameraPos = this.sceneManager.getCameraPosition();
     this.player.render(this.ctx, cameraPos.x, cameraPos.y);
 
-    // Render leaderboard icon (always visible)
+    // Render UI icons (always visible)
     this.leaderboardManager.renderLeaderboardIcon(this.ctx);
+    this.questManager.renderQuestIcon(this.ctx);
 
     // Render fridge UI on top of everything
     const fridgeManager = FridgeManager.getInstance();
     fridgeManager.renderFridgeUI(this.ctx, 'player1'); // Use actual player ID
 
-    // Render leaderboard UI (if open)
+    // Render overlay UIs (if open)
     this.leaderboardManager.renderLeaderboardUI(this.ctx);
+    this.questManager.renderQuestUI(this.ctx);
 
     // Render chat overlay on top of everything else
     this.chatOverlay.render(this.ctx);
@@ -129,6 +178,25 @@ class GameEngine {
   // Public getter for ChatOverlay (for NPCs and other components)
   public getChatOverlay(): ChatOverlay {
     return this.chatOverlay;
+  }
+
+  // Public getter for QuestManager (for external components)
+  public getQuestManager(): QuestManager {
+    return this.questManager;
+  }
+
+  // Debug method to test quest progression (can be called from browser console)
+  public testQuestProgression(): void {
+    console.log('🧪 Testing quest progression...');
+    
+    // Simulate different quest actions
+    this.questManager.onItemClaimed(false); // Regular item claim
+    this.questManager.onItemClaimed(true);  // Expiring item claim
+    this.questManager.onItemAdded();        // Item added
+    this.questManager.onLocationVisited();  // Location visited
+    this.questManager.onNPCChatted();       // NPC chatted
+    
+    console.log('🧪 Quest test completed - check quest log for progress');
   }
 
 }

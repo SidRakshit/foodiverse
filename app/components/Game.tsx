@@ -35,6 +35,13 @@ const Game: React.FC = () => {
         gameEngineRef.current.start();
         setIsLoaded(true);
 
+        // Make game engine accessible for debugging
+        if (typeof window !== 'undefined') {
+          (window as any).gameEngine = gameEngineRef.current;
+          console.log('🎮 Game engine available as window.gameEngine for debugging');
+          console.log('🧪 Use window.gameEngine.testQuestProgression() to test quests');
+        }
+
         // Focus canvas for keyboard input
         canvas.focus();
       }

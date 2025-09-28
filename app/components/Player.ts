@@ -1,6 +1,7 @@
 import InputHandler from './InputHandler';
 import { Scene } from './types';
 import FridgeManager from './FridgeManager';
+import QuestManager from './QuestManager';
 import { BackendChecker } from '../utils/BackendChecker';
 import { BartenderNPC } from './off-campus/BartenderNPC';
 import { PlayerCharacter } from './CharacterData';
@@ -46,9 +47,10 @@ class Player {
     // Handle fridge interactions
     this.updateFridgeInteraction(inputHandler, scene);
     
-    // Only allow movement if not chatting and fridge UI is not open
+    // Only allow movement if not chatting and no UI is open
     const fridgeManager = FridgeManager.getInstance();
-    if (!this.isChatting && !fridgeManager.isFridgeUIOpen()) {
+    const questManager = QuestManager.getInstance();
+    if (!this.isChatting && !fridgeManager.isFridgeUIOpen() && !questManager.isQuestUIOpen()) {
       let newX = this.x;
       let newY = this.y;
       this.isMoving = false;

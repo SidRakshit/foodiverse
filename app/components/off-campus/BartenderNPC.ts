@@ -1,6 +1,7 @@
 import { BaseNPC, NPCConfig } from '../NPC';
 import { jakeService } from '../../services/JakeService';
 import { ChatOverlay } from '../ChatOverlay';
+import QuestManager from '../QuestManager';
 
 export class BartenderNPC extends BaseNPC {
   private isThinking: boolean = false;
@@ -62,6 +63,10 @@ export class BartenderNPC extends BaseNPC {
 
     // Add player message to chat overlay
     this.chatOverlay.addMessage(playerMessage, 'Player');
+
+    // Update quest progress for chatting with NPCs
+    const questManager = QuestManager.getInstance();
+    questManager.onNPCChatted();
 
     // Start thinking
     this.isThinking = true;

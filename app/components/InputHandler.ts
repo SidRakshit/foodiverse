@@ -80,7 +80,7 @@ class InputHandler {
     const gameKeys = [
       'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
       'KeyW', 'KeyA', 'KeyS', 'KeyD',
-      'Space', 'Enter', 'Escape', 'KeyE', 'KeyL'
+      'Space', 'Enter', 'Escape', 'KeyE', 'KeyL', 'KeyQ'
     ];
     return gameKeys.includes(key);
   }

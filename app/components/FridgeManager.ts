@@ -1,4 +1,5 @@
 import { apiService, BackendFridgeItem } from '../services/ApiService';
+import QuestManager from './QuestManager';
 
 export interface FridgeItem {
   id: string;
@@ -598,13 +599,21 @@ class FridgeManager {
     // Auto-categorize based on common food items
     const category = this.categorizeFood(itemName.trim());
     
-    return await this.addItem(fridgeId, {
+    const success = await this.addItem(fridgeId, {
       name: itemName.trim(),
       category: category,
       quantity: 1,
       addedBy: playerId,
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days default
     }, playerId);
+
+    // Update quest progress if successful
+    if (success) {
+      const questManager = QuestManager.getInstance();
+      questManager.onItemAdded();
+    }
+
+    return success;
   }
 
   public async addCustomItemWithExpiration(fridgeId: string, itemName: string, expirationDate: Date, playerId: string): Promise<boolean> {
@@ -615,13 +624,21 @@ class FridgeManager {
     // Auto-categorize based on common food items
     const category = this.categorizeFood(itemName.trim());
     
-    return await this.addItem(fridgeId, {
+    const success = await this.addItem(fridgeId, {
       name: itemName.trim(),
       category: category,
       quantity: 1,
       addedBy: playerId,
       expirationDate: expirationDate
     }, playerId);
+
+    // Update quest progress if successful
+    if (success) {
+      const questManager = QuestManager.getInstance();
+      questManager.onItemAdded();
+    }
+
+    return success;
   }
 
   // Simple food categorization
@@ -777,12 +794,27 @@ class FridgeManager {
   // Additional database operations
   public async claimAndDeleteItem(itemId: string): Promise<boolean> {
     try {
+      // Find the item to check if it's expiring soon
+      let isExpiring = false;
+      if (this.uiState.currentFridge) {
+        const items = this.getFridgeItemsSync(this.uiState.currentFridge);
+        const item = items.find(i => i.id === itemId);
+        if (item && item.expirationDate) {
+          const timeUntilExpiry = item.expirationDate.getTime() - Date.now();
+          isExpiring = timeUntilExpiry <= (24 * 60 * 60 * 1000); // Within 24 hours
+        }
+      }
+
       // For database items, claim them (which now deletes them automatically)
       const response = await apiService.claimItem(itemId);
       if (response.error) {
         console.error('Failed to claim item:', response.error);
         return false;
       }
+      
+      // Update quest progress
+      const questManager = QuestManager.getInstance();
+      questManager.onItemClaimed(isExpiring);
       
       // Refresh current fridge data to show the item is gone
       if (this.uiState.currentFridge) {
