@@ -4,6 +4,7 @@ import InputHandler from './InputHandler';
 import SceneManager from './SceneManager';
 import FridgeManager from './FridgeManager';
 import { PlayerCharacter } from './CharacterData';
+import { ChatOverlay } from './ChatOverlay';
 
 class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -11,6 +12,7 @@ class GameEngine {
   private player: Player;
   private sceneManager: SceneManager;
   private inputHandler: InputHandler;
+  private chatOverlay: ChatOverlay;
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
   private isRunning: boolean = false;
@@ -22,7 +24,8 @@ class GameEngine {
     // Initialize game objects
     this.player = new Player(400, 912, playerCharacter); // Starting position in campus area (608 + 304)
     this.inputHandler = new InputHandler();
-    this.sceneManager = new SceneManager(this.player, this.inputHandler);
+    this.chatOverlay = new ChatOverlay();
+    this.sceneManager = new SceneManager(this.player, this.inputHandler, this.chatOverlay);
 
     // Bind the game loop
     this.gameLoop = this.gameLoop.bind(this);
@@ -62,10 +65,13 @@ class GameEngine {
   private update(deltaTime: number): void {
     // Check scene transitions BEFORE clearing input state
     this.sceneManager.update(deltaTime);
-    
+
     // Update player BEFORE clearing input state
     this.player.update(deltaTime, this.inputHandler, this.sceneManager.getCurrentScene());
-    
+
+    // Update chat overlay
+    this.chatOverlay.update(deltaTime);
+
     // Update input (this clears keyPressed state) - do this AFTER player has processed input
     this.inputHandler.update();
   }
@@ -74,17 +80,25 @@ class GameEngine {
     // Clear canvas
     this.ctx.fillStyle = '#2a4d3a'; // Dark green background
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     // Render current scene
     this.sceneManager.render(this.ctx);
-    
+
     // Render player
     const cameraPos = this.sceneManager.getCameraPosition();
     this.player.render(this.ctx, cameraPos.x, cameraPos.y);
-    
+
     // Render fridge UI on top of everything
     const fridgeManager = FridgeManager.getInstance();
     fridgeManager.renderFridgeUI(this.ctx, 'player1'); // Use actual player ID
+
+    // Render chat overlay on top of everything else
+    this.chatOverlay.render(this.ctx);
+  }
+
+  // Public getter for ChatOverlay (for NPCs and other components)
+  public getChatOverlay(): ChatOverlay {
+    return this.chatOverlay;
   }
 
 }

@@ -14,17 +14,20 @@ import TechTerraceInterior from './off-campus/TechTerraceInterior';
 import FoodLionInterior from './off-campus/FoodLionInterior';
 import FridgeManager from './FridgeManager';
 import { Scene, SceneType } from './types';
+import { ChatOverlay } from './ChatOverlay';
 
 class SceneManager {
   private currentScene: Scene;
   private scenes: Map<SceneType, Scene> = new Map();
   private player: Player;
   private inputHandler: InputHandler;
+  private chatOverlay: ChatOverlay;
   private lastBuildingEntry: { buildingType: string; tileX: number; tileY: number } | null = null;
 
-  constructor(player: Player, inputHandler: InputHandler) {
+  constructor(player: Player, inputHandler: InputHandler, chatOverlay: ChatOverlay) {
     this.player = player;
     this.inputHandler = inputHandler;
+    this.chatOverlay = chatOverlay;
     this.initializeScenes();
     this.currentScene = this.scenes.get('campus')!;
   }
@@ -42,7 +45,7 @@ class SceneManager {
     // Off-campus restaurant interiors
     this.scenes.set('tots', new TotsDownstairs());
     this.scenes.set('tots_upstairs', new TotsUpstairs());
-    this.scenes.set('hokiehouse', new HokieHouseInterior());
+    this.scenes.set('hokiehouse', new HokieHouseInterior(this.chatOverlay));
     this.scenes.set('centros', new CentrosInterior());
     
     // Off-campus apartment interiors

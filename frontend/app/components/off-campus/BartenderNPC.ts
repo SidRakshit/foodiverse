@@ -1,5 +1,6 @@
 import { BaseNPC, NPCConfig } from '../NPC';
 import { jakeService } from '../../services/JakeService';
+import { ChatOverlay } from '../ChatOverlay';
 
 export class BartenderNPC extends BaseNPC {
   private isThinking: boolean = false;
@@ -8,8 +9,9 @@ export class BartenderNPC extends BaseNPC {
   private responseDuration: number = 4000; // 4 seconds
   private thinkingTimer: number = 0;
   private thinkingDuration: number = 2000; // 2 seconds thinking time
+  private chatOverlay: ChatOverlay;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, chatOverlay: ChatOverlay) {
     const config: NPCConfig = {
       x,
       y,
@@ -28,6 +30,7 @@ export class BartenderNPC extends BaseNPC {
       clothingColor: '#8B0000' // VT Maroon apron/shirt
     };
     super(config);
+    this.chatOverlay = chatOverlay;
   }
 
   public update(deltaTime: number): void {
@@ -56,12 +59,13 @@ export class BartenderNPC extends BaseNPC {
     }
 
     console.log(`🍺 Jake received message from player: "${playerMessage}"`);
-    console.log('🍺 About to call jakeService.chatWithJake...');
-    
+
+    // Add player message to chat overlay
+    this.chatOverlay.addMessage(playerMessage, 'Player');
+
     // Start thinking
     this.isThinking = true;
     this.thinkingTimer = this.thinkingDuration;
-    this.currentResponse = ''; // Clear any previous response
     console.log('🍺 Jake started thinking...');
 
     try {
@@ -69,17 +73,22 @@ export class BartenderNPC extends BaseNPC {
       console.log('🍺 Calling jakeService.chatWithJake now...');
       const response = await jakeService.chatWithJake(playerMessage);
       console.log('🍺 Got response from jakeService:', response);
-      
-      // Show response
+
+      // Add Jake's response to chat overlay
+      this.chatOverlay.addMessage(response, 'Jake');
+
+      // Also show response in speech bubble above Jake
       this.currentResponse = response;
       this.responseTimer = this.responseDuration;
       this.isThinking = false;
       this.thinkingTimer = 0;
-      
-      console.log(`🍺 Jake will display response: "${response}"`);
+
+      console.log(`🍺 Jake responded in chat: "${response}"`);
     } catch (error) {
       console.error('🚨 Error getting Jake response:', error);
-      this.currentResponse = "Sorry, I'm a bit distracted right now. What can I get you?";
+      const fallbackResponse = "Sorry, I'm a bit distracted right now. What can I get you?";
+      this.chatOverlay.addMessage(fallbackResponse, 'Jake');
+      this.currentResponse = fallbackResponse;
       this.responseTimer = this.responseDuration;
       this.isThinking = false;
       this.thinkingTimer = 0;
@@ -101,10 +110,10 @@ export class BartenderNPC extends BaseNPC {
 
     // Draw NPC body
     this.renderBody(ctx, screenX, screenY);
-    
+
     // Draw name tag
     this.renderNameTag(ctx, screenX, screenY);
-    
+
     // Draw chat bubble if thinking or responding
     if (this.isThinking || this.currentResponse) {
       this.renderChatBubble(ctx, screenX, screenY);
@@ -113,13 +122,13 @@ export class BartenderNPC extends BaseNPC {
 
   private renderChatBubble(ctx: CanvasRenderingContext2D, npcX: number, npcY: number): void {
     let message = '';
-    
+
     if (this.isThinking) {
       message = '...';
     } else if (this.currentResponse) {
       message = this.currentResponse;
     }
-    
+
     if (!message) return;
 
     // Bubble settings - much larger for better readability
@@ -131,16 +140,16 @@ export class BartenderNPC extends BaseNPC {
     // Measure text and wrap lines
     ctx.save();
     ctx.font = '14px Arial'; // Slightly larger font
-    
+
     // Split text into lines that fit within maxWidth
     const words = message.split(' ');
     const lines: string[] = [];
     let currentLine = '';
-    
+
     for (const word of words) {
       const testLine = currentLine + (currentLine ? ' ' : '') + word;
       const testWidth = ctx.measureText(testLine).width;
-      
+
       if (testWidth > maxWidth - padding * 2 && currentLine) {
         lines.push(currentLine);
         currentLine = word;
@@ -149,25 +158,25 @@ export class BartenderNPC extends BaseNPC {
       }
     }
     if (currentLine) lines.push(currentLine);
-    
+
     // Calculate bubble dimensions
     const bubbleWidth = Math.min(maxWidth, Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2);
     const bubbleHeight = lines.length * lineHeight + padding * 2;
-    
+
     // Calculate bubble X position with boundary checking
     let bubbleX = npcX + this.width / 2 - bubbleWidth / 2;
-    
+
     // Get canvas dimensions for boundary checking
     const canvasWidth = ctx.canvas.width;
     const canvasHeight = ctx.canvas.height;
-    
+
     // Keep bubble within screen boundaries
     if (bubbleX < 10) {
       bubbleX = 10; // Left boundary
     } else if (bubbleX + bubbleWidth > canvasWidth - 10) {
       bubbleX = canvasWidth - bubbleWidth - 10; // Right boundary
     }
-    
+
     // Adjust Y position if bubble goes off top of screen
     let adjustedBubbleY = bubbleY;
     if (bubbleY < 10) {
@@ -178,7 +187,7 @@ export class BartenderNPC extends BaseNPC {
     ctx.fillStyle = this.isThinking ? 'rgba(255, 255, 200, 0.9)' : 'rgba(200, 255, 200, 0.9)';
     ctx.strokeStyle = '#8B0000'; // VT Maroon border
     ctx.lineWidth = 2;
-    
+
     // Rounded rectangle for bubble
     this.drawRoundedRect(ctx, bubbleX, adjustedBubbleY, bubbleWidth, bubbleHeight, 8);
     ctx.fill();
@@ -186,7 +195,7 @@ export class BartenderNPC extends BaseNPC {
 
     // Draw bubble tail pointing to Jake (adjust based on bubble position)
     const tailX = Math.max(bubbleX + 15, Math.min(npcX + this.width / 2, bubbleX + bubbleWidth - 15));
-    
+
     ctx.beginPath();
     if (adjustedBubbleY > npcY) {
       // Bubble is below NPC, tail points up
@@ -207,7 +216,7 @@ export class BartenderNPC extends BaseNPC {
     ctx.fillStyle = '#2C3E50';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
+
     if (this.isThinking) {
       // Animate thinking dots
       const dots = Math.floor(Date.now() / 500) % 4;
@@ -245,6 +254,7 @@ export class BartenderNPC extends BaseNPC {
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
   }
+
 
   protected renderBody(ctx: CanvasRenderingContext2D, x: number, y: number): void {
     // Head

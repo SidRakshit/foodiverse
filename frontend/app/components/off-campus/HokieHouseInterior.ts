@@ -1,6 +1,7 @@
 import BaseOffCampusBuilding from './BaseOffCampusBuilding';
 import { SceneType } from '../types';
 import { BartenderNPC } from './BartenderNPC';
+import { ChatOverlay } from '../ChatOverlay';
 
 class HokieHouseInterior extends BaseOffCampusBuilding {
   public type: SceneType = 'hokiehouse';
@@ -14,10 +15,10 @@ class HokieHouseInterior extends BaseOffCampusBuilding {
     return 'commercial';
   }
 
-  constructor() {
+  constructor(chatOverlay: ChatOverlay) {
     super();
     // Position bartender near the bottles and bar area (left side)
-    this.bartender = new BartenderNPC(80, 170);
+    this.bartender = new BartenderNPC(80, 170, chatOverlay);
   }
 
   protected generateBuilding(): any[][] {
