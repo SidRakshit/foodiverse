@@ -71,14 +71,6 @@ const Game: React.FC = () => {
           </div>
         </div>
       )}
-      <div className="mt-4 text-white text-center game-ui">
-        <div className="bg-black bg-opacity-80 p-4 rounded border border-white inline-block">
-          <p className="text-sm mb-1">🎮 VIRGINIA TECH CAMPUS</p>
-          <p className="text-xs">WASD or Arrow Keys to move around campus</p>
-          <p className="text-xs">Stand directly on building doors to enter!</p>
-          <p className="text-xs mt-2">Click canvas first, then use keyboard</p>
-        </div>
-      </div>
     </div>
   );
 };
