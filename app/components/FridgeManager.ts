@@ -36,13 +36,17 @@ class FridgeManager {
     isInputMode: boolean;
     inputText: string;
     inputPrompt: string;
+    inputStep: number; // 1 = food name, 2 = expiration date
+    foodName: string; // Store food name from step 1
   } = {
     isOpen: false,
     currentFridge: null,
     selectedItemIndex: 0,
     isInputMode: false,
     inputText: '',
-    inputPrompt: ''
+    inputPrompt: '',
+    inputStep: 1,
+    foodName: ''
   };
   private isLoading: boolean = false;
   private lastRefresh: Map<string, number> = new Map(); // Track last refresh time per fridge
@@ -349,7 +353,13 @@ class FridgeManager {
     ctx.textAlign = 'center';
     // Input mode instructions or regular instructions
     if (this.uiState.isInputMode) {
-      ctx.fillText('Type food item name, press ENTER to add, ESC to cancel', uiX + uiWidth / 2, uiY + uiHeight - 10);
+      let inputInstructions = '';
+      if (this.uiState.inputStep === 1) {
+        inputInstructions = 'Step 1/2: Type food item name, press ENTER to continue, ESC to cancel';
+      } else if (this.uiState.inputStep === 2) {
+        inputInstructions = 'Step 2/2: Enter expiration days (1-365) or ENTER for default, ESC to cancel';
+      }
+      ctx.fillText(inputInstructions, uiX + uiWidth / 2, uiY + uiHeight - 10);
     } else {
       let instructions = '';
       
@@ -501,8 +511,10 @@ class FridgeManager {
     } else if (!item.isLocalItem) {
       statusText += ' [DB]';
     }
-    const addedText = `Added by ${item.addedBy} on ${item.dateAdded.toLocaleDateString()}${statusText}`;
-    ctx.fillText(addedText, x + 30, y + 28);
+    const expirationText = item.expirationDate 
+      ? `Expires: ${item.expirationDate.toLocaleDateString()} | Added by ${item.addedBy}${statusText}`
+      : `Added by ${item.addedBy} on ${item.dateAdded.toLocaleDateString()}${statusText}`;
+    ctx.fillText(expirationText, x + 30, y + 28);
     
     // Expiration warning or status indicator
     if (isExpiringSoon && item.expirationDate) {
@@ -592,6 +604,23 @@ class FridgeManager {
       quantity: 1,
       addedBy: playerId,
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days default
+    }, playerId);
+  }
+
+  public async addCustomItemWithExpiration(fridgeId: string, itemName: string, expirationDate: Date, playerId: string): Promise<boolean> {
+    if (!itemName.trim()) {
+      return false;
+    }
+
+    // Auto-categorize based on common food items
+    const category = this.categorizeFood(itemName.trim());
+    
+    return await this.addItem(fridgeId, {
+      name: itemName.trim(),
+      category: category,
+      quantity: 1,
+      addedBy: playerId,
+      expirationDate: expirationDate
     }, playerId);
   }
 
@@ -791,12 +820,16 @@ class FridgeManager {
     this.uiState.isInputMode = true;
     this.uiState.inputText = '';
     this.uiState.inputPrompt = prompt;
+    this.uiState.inputStep = 1;
+    this.uiState.foodName = '';
   }
 
   public cancelInputMode(): void {
     this.uiState.isInputMode = false;
     this.uiState.inputText = '';
     this.uiState.inputPrompt = '';
+    this.uiState.inputStep = 1;
+    this.uiState.foodName = '';
   }
 
   public isInInputMode(): boolean {
@@ -826,14 +859,48 @@ class FridgeManager {
       return false;
     }
 
-    const success = await this.addCustomItem(
-      this.uiState.currentFridge, 
-      this.uiState.inputText, 
-      playerId
-    );
+    if (this.uiState.inputStep === 1) {
+      // Step 1: Food name input
+      if (!this.uiState.inputText.trim()) {
+        return false;
+      }
+      
+      this.uiState.foodName = this.uiState.inputText.trim();
+      this.uiState.inputText = '';
+      this.uiState.inputStep = 2;
+      this.uiState.inputPrompt = 'Enter expiration days (e.g., 7) or press ENTER for default (7 days):';
+      return true;
+    } else if (this.uiState.inputStep === 2) {
+      // Step 2: Expiration date input
+      let daysToExpiry = 7; // Default
+      
+      if (this.uiState.inputText.trim()) {
+        const inputDays = parseInt(this.uiState.inputText.trim());
+        if (!isNaN(inputDays) && inputDays > 0 && inputDays <= 365) {
+          daysToExpiry = inputDays;
+        } else {
+          // Invalid input, show error and stay on step 2
+          this.uiState.inputText = '';
+          this.uiState.inputPrompt = 'Invalid input! Enter days (1-365) or press ENTER for default (7 days):';
+          return false;
+        }
+      }
+      
+      // Calculate expiration date
+      const expirationDate = new Date(Date.now() + (daysToExpiry * 24 * 60 * 60 * 1000));
+      
+      const success = await this.addCustomItemWithExpiration(
+        this.uiState.currentFridge,
+        this.uiState.foodName,
+        expirationDate,
+        playerId
+      );
 
-    this.cancelInputMode();
-    return success;
+      this.cancelInputMode();
+      return success;
+    }
+
+    return false;
   }
 }
 

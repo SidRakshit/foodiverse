@@ -3,6 +3,7 @@ import World from './World';
 import InputHandler from './InputHandler';
 import SceneManager from './SceneManager';
 import FridgeManager from './FridgeManager';
+import LeaderboardManager from './LeaderboardManager';
 import { PlayerCharacter } from './CharacterData';
 import { ChatOverlay } from './ChatOverlay';
 
@@ -13,6 +14,7 @@ class GameEngine {
   private sceneManager: SceneManager;
   private inputHandler: InputHandler;
   private chatOverlay: ChatOverlay;
+  private leaderboardManager: LeaderboardManager;
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
   private isRunning: boolean = false;
@@ -24,7 +26,9 @@ class GameEngine {
     // Initialize game objects
     this.player = new Player(400, 912, playerCharacter); // Starting position in campus area (608 + 304)
     this.inputHandler = new InputHandler();
+    this.inputHandler.setCanvas(canvas); // Set canvas for mouse events
     this.chatOverlay = new ChatOverlay();
+    this.leaderboardManager = LeaderboardManager.getInstance();
     this.sceneManager = new SceneManager(this.player, this.inputHandler, this.chatOverlay);
 
     // Bind the game loop
@@ -63,6 +67,9 @@ class GameEngine {
   }
 
   private update(deltaTime: number): void {
+    // Handle leaderboard input BEFORE clearing input state
+    this.handleLeaderboardInput();
+
     // Check scene transitions BEFORE clearing input state
     this.sceneManager.update(deltaTime);
 
@@ -72,8 +79,25 @@ class GameEngine {
     // Update chat overlay
     this.chatOverlay.update(deltaTime);
 
-    // Update input (this clears keyPressed state) - do this AFTER player has processed input
+    // Update input (this clears keyPressed state) - do this AFTER all components have processed input
     this.inputHandler.update();
+  }
+
+  private handleLeaderboardInput(): void {
+    // Handle keyboard toggle (L key)
+    if (this.inputHandler.wasKeyJustPressed('KeyL')) {
+      if (this.leaderboardManager.isLeaderboardOpen()) {
+        this.leaderboardManager.closeLeaderboard();
+      } else {
+        this.leaderboardManager.openLeaderboard();
+      }
+    }
+
+    // Handle mouse clicks
+    const mouseClicks = this.inputHandler.getMouseClicks();
+    for (const click of mouseClicks) {
+      this.leaderboardManager.handleClick(click.x, click.y);
+    }
   }
 
   private render(): void {
@@ -88,9 +112,15 @@ class GameEngine {
     const cameraPos = this.sceneManager.getCameraPosition();
     this.player.render(this.ctx, cameraPos.x, cameraPos.y);
 
+    // Render leaderboard icon (always visible)
+    this.leaderboardManager.renderLeaderboardIcon(this.ctx);
+
     // Render fridge UI on top of everything
     const fridgeManager = FridgeManager.getInstance();
     fridgeManager.renderFridgeUI(this.ctx, 'player1'); // Use actual player ID
+
+    // Render leaderboard UI (if open)
+    this.leaderboardManager.renderLeaderboardUI(this.ctx);
 
     // Render chat overlay on top of everything else
     this.chatOverlay.render(this.ctx);
