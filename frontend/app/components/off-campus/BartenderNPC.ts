@@ -153,7 +153,26 @@ export class BartenderNPC extends BaseNPC {
     // Calculate bubble dimensions
     const bubbleWidth = Math.min(maxWidth, Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2);
     const bubbleHeight = lines.length * lineHeight + padding * 2;
-    const bubbleX = npcX + this.width / 2 - bubbleWidth / 2;
+    
+    // Calculate bubble X position with boundary checking
+    let bubbleX = npcX + this.width / 2 - bubbleWidth / 2;
+    
+    // Get canvas dimensions for boundary checking
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+    
+    // Keep bubble within screen boundaries
+    if (bubbleX < 10) {
+      bubbleX = 10; // Left boundary
+    } else if (bubbleX + bubbleWidth > canvasWidth - 10) {
+      bubbleX = canvasWidth - bubbleWidth - 10; // Right boundary
+    }
+    
+    // Adjust Y position if bubble goes off top of screen
+    let adjustedBubbleY = bubbleY;
+    if (bubbleY < 10) {
+      adjustedBubbleY = npcY + this.height + 10; // Show below NPC instead
+    }
 
     // Draw bubble background (different color for Jake)
     ctx.fillStyle = this.isThinking ? 'rgba(255, 255, 200, 0.9)' : 'rgba(200, 255, 200, 0.9)';
@@ -161,15 +180,25 @@ export class BartenderNPC extends BaseNPC {
     ctx.lineWidth = 2;
     
     // Rounded rectangle for bubble
-    this.drawRoundedRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 8);
+    this.drawRoundedRect(ctx, bubbleX, adjustedBubbleY, bubbleWidth, bubbleHeight, 8);
     ctx.fill();
     ctx.stroke();
 
-    // Draw bubble tail pointing to Jake
+    // Draw bubble tail pointing to Jake (adjust based on bubble position)
+    const tailX = Math.max(bubbleX + 15, Math.min(npcX + this.width / 2, bubbleX + bubbleWidth - 15));
+    
     ctx.beginPath();
-    ctx.moveTo(npcX + this.width / 2, bubbleY + bubbleHeight);
-    ctx.lineTo(npcX + this.width / 2 - 5, bubbleY + bubbleHeight + 8);
-    ctx.lineTo(npcX + this.width / 2 + 5, bubbleY + bubbleHeight + 8);
+    if (adjustedBubbleY > npcY) {
+      // Bubble is below NPC, tail points up
+      ctx.moveTo(tailX, adjustedBubbleY);
+      ctx.lineTo(tailX - 5, adjustedBubbleY - 8);
+      ctx.lineTo(tailX + 5, adjustedBubbleY - 8);
+    } else {
+      // Bubble is above NPC, tail points down
+      ctx.moveTo(tailX, adjustedBubbleY + bubbleHeight);
+      ctx.lineTo(tailX - 5, adjustedBubbleY + bubbleHeight + 8);
+      ctx.lineTo(tailX + 5, adjustedBubbleY + bubbleHeight + 8);
+    }
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -184,10 +213,10 @@ export class BartenderNPC extends BaseNPC {
       const dots = Math.floor(Date.now() / 500) % 4;
       const thinkingText = '.'.repeat(dots + 1);
       ctx.font = 'bold 16px Arial';
-      ctx.fillText(thinkingText, bubbleX + bubbleWidth / 2, bubbleY + bubbleHeight / 2);
+      ctx.fillText(thinkingText, bubbleX + bubbleWidth / 2, adjustedBubbleY + bubbleHeight / 2);
     } else {
       // Draw multiple lines of text
-      const startY = bubbleY + padding + lineHeight / 2;
+      const startY = adjustedBubbleY + padding + lineHeight / 2;
       lines.forEach((line, index) => {
         ctx.fillText(line, bubbleX + bubbleWidth / 2, startY + index * lineHeight);
       });
