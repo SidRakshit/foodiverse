@@ -1,6 +1,14 @@
 import { BaseNPC, NPCConfig } from '../NPC';
+import { jakeService } from '../../services/JakeService';
 
 export class BartenderNPC extends BaseNPC {
+  private isThinking: boolean = false;
+  private currentResponse: string = '';
+  private responseTimer: number = 0;
+  private responseDuration: number = 4000; // 4 seconds
+  private thinkingTimer: number = 0;
+  private thinkingDuration: number = 2000; // 2 seconds thinking time
+
   constructor(x: number, y: number) {
     const config: NPCConfig = {
       x,
@@ -20,6 +28,222 @@ export class BartenderNPC extends BaseNPC {
       clothingColor: '#8B0000' // VT Maroon apron/shirt
     };
     super(config);
+  }
+
+  public update(deltaTime: number): void {
+    // Update thinking timer
+    if (this.isThinking && this.thinkingTimer > 0) {
+      this.thinkingTimer -= deltaTime;
+      if (this.thinkingTimer <= 0) {
+        this.isThinking = false;
+      }
+    }
+
+    // Update response display timer
+    if (this.currentResponse && this.responseTimer > 0) {
+      this.responseTimer -= deltaTime;
+      if (this.responseTimer <= 0) {
+        this.currentResponse = '';
+        this.responseTimer = 0;
+      }
+    }
+  }
+
+  public async respondToPlayer(playerMessage: string): Promise<void> {
+    if (this.isThinking) {
+      console.log('🍺 Jake is already thinking, ignoring new message');
+      return; // Already processing a message
+    }
+
+    console.log(`🍺 Jake received message from player: "${playerMessage}"`);
+    console.log('🍺 About to call jakeService.chatWithJake...');
+    
+    // Start thinking
+    this.isThinking = true;
+    this.thinkingTimer = this.thinkingDuration;
+    this.currentResponse = ''; // Clear any previous response
+    console.log('🍺 Jake started thinking...');
+
+    try {
+      // Get response from Gemini
+      console.log('🍺 Calling jakeService.chatWithJake now...');
+      const response = await jakeService.chatWithJake(playerMessage);
+      console.log('🍺 Got response from jakeService:', response);
+      
+      // Show response
+      this.currentResponse = response;
+      this.responseTimer = this.responseDuration;
+      this.isThinking = false;
+      this.thinkingTimer = 0;
+      
+      console.log(`🍺 Jake will display response: "${response}"`);
+    } catch (error) {
+      console.error('🚨 Error getting Jake response:', error);
+      this.currentResponse = "Sorry, I'm a bit distracted right now. What can I get you?";
+      this.responseTimer = this.responseDuration;
+      this.isThinking = false;
+      this.thinkingTimer = 0;
+      console.log('🍺 Using fallback response due to error');
+    }
+  }
+
+  public isNearPlayer(playerX: number, playerY: number): boolean {
+    const distance = Math.sqrt(
+      Math.pow(playerX - (this.x + this.width / 2), 2) + 
+      Math.pow(playerY - (this.y + this.height / 2), 2)
+    );
+    return distance <= 80; // Within 80 pixels (increased for easier interaction)
+  }
+
+  public render(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number): void {
+    const screenX = this.x - cameraX;
+    const screenY = this.y - cameraY;
+
+    // Draw NPC body
+    this.renderBody(ctx, screenX, screenY);
+    
+    // Draw name tag
+    this.renderNameTag(ctx, screenX, screenY);
+    
+    // Draw chat bubble if thinking or responding
+    if (this.isThinking || this.currentResponse) {
+      this.renderChatBubble(ctx, screenX, screenY);
+    }
+  }
+
+  private renderChatBubble(ctx: CanvasRenderingContext2D, npcX: number, npcY: number): void {
+    let message = '';
+    
+    if (this.isThinking) {
+      message = '...';
+    } else if (this.currentResponse) {
+      message = this.currentResponse;
+    }
+    
+    if (!message) return;
+
+    // Bubble settings - much larger for better readability
+    const padding = 12;
+    const maxWidth = 320; // Increased from 200
+    const lineHeight = 16;
+    const bubbleY = npcY - 80; // Position higher above NPC
+
+    // Measure text and wrap lines
+    ctx.save();
+    ctx.font = '14px Arial'; // Slightly larger font
+    
+    // Split text into lines that fit within maxWidth
+    const words = message.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    for (const word of words) {
+      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+      const testWidth = ctx.measureText(testLine).width;
+      
+      if (testWidth > maxWidth - padding * 2 && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    
+    // Calculate bubble dimensions
+    const bubbleWidth = Math.min(maxWidth, Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2);
+    const bubbleHeight = lines.length * lineHeight + padding * 2;
+    
+    // Calculate bubble X position with boundary checking
+    let bubbleX = npcX + this.width / 2 - bubbleWidth / 2;
+    
+    // Get canvas dimensions for boundary checking
+    const canvasWidth = ctx.canvas.width;
+    const canvasHeight = ctx.canvas.height;
+    
+    // Keep bubble within screen boundaries
+    if (bubbleX < 10) {
+      bubbleX = 10; // Left boundary
+    } else if (bubbleX + bubbleWidth > canvasWidth - 10) {
+      bubbleX = canvasWidth - bubbleWidth - 10; // Right boundary
+    }
+    
+    // Adjust Y position if bubble goes off top of screen
+    let adjustedBubbleY = bubbleY;
+    if (bubbleY < 10) {
+      adjustedBubbleY = npcY + this.height + 10; // Show below NPC instead
+    }
+
+    // Draw bubble background (different color for Jake)
+    ctx.fillStyle = this.isThinking ? 'rgba(255, 255, 200, 0.9)' : 'rgba(200, 255, 200, 0.9)';
+    ctx.strokeStyle = '#8B0000'; // VT Maroon border
+    ctx.lineWidth = 2;
+    
+    // Rounded rectangle for bubble
+    this.drawRoundedRect(ctx, bubbleX, adjustedBubbleY, bubbleWidth, bubbleHeight, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw bubble tail pointing to Jake (adjust based on bubble position)
+    const tailX = Math.max(bubbleX + 15, Math.min(npcX + this.width / 2, bubbleX + bubbleWidth - 15));
+    
+    ctx.beginPath();
+    if (adjustedBubbleY > npcY) {
+      // Bubble is below NPC, tail points up
+      ctx.moveTo(tailX, adjustedBubbleY);
+      ctx.lineTo(tailX - 5, adjustedBubbleY - 8);
+      ctx.lineTo(tailX + 5, adjustedBubbleY - 8);
+    } else {
+      // Bubble is above NPC, tail points down
+      ctx.moveTo(tailX, adjustedBubbleY + bubbleHeight);
+      ctx.lineTo(tailX - 5, adjustedBubbleY + bubbleHeight + 8);
+      ctx.lineTo(tailX + 5, adjustedBubbleY + bubbleHeight + 8);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = '#2C3E50';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    if (this.isThinking) {
+      // Animate thinking dots
+      const dots = Math.floor(Date.now() / 500) % 4;
+      const thinkingText = '.'.repeat(dots + 1);
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(thinkingText, bubbleX + bubbleWidth / 2, adjustedBubbleY + bubbleHeight / 2);
+    } else {
+      // Draw multiple lines of text
+      const startY = adjustedBubbleY + padding + lineHeight / 2;
+      lines.forEach((line, index) => {
+        ctx.fillText(line, bubbleX + bubbleWidth / 2, startY + index * lineHeight);
+      });
+    }
+
+    ctx.restore();
+  }
+
+  private drawRoundedRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ): void {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
   }
 
   protected renderBody(ctx: CanvasRenderingContext2D, x: number, y: number): void {

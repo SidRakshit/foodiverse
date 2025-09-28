@@ -83,9 +83,18 @@ class HokieHouseInterior extends BaseOffCampusBuilding {
     return interior;
   }
 
-  public update(deltaTime: number): void {
+  public update(deltaTime: number, player?: any): void {
     super.update(deltaTime);
     this.bartender.update(deltaTime);
+    
+    // Check if player is near Jake and update proximity
+    if (player) {
+      if (this.bartender.isNearPlayer(player.x, player.y)) {
+        player.setNearbyJake(this.bartender);
+      } else {
+        player.setNearbyJake(null);
+      }
+    }
   }
 
   protected renderBuildingSpecificElements(ctx: CanvasRenderingContext2D): void {

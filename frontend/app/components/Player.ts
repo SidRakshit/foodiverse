@@ -2,6 +2,7 @@ import InputHandler from './InputHandler';
 import { Scene } from './types';
 import FridgeManager from './FridgeManager';
 import { BackendChecker } from '../utils/BackendChecker';
+import { BartenderNPC } from './off-campus/BartenderNPC';
 import { PlayerCharacter } from './CharacterData';
 
 class Player {
@@ -26,6 +27,7 @@ class Player {
   // Interaction system
   private nearbyFridge: string | null = null;
   private playerId: string = 'player1'; // This should be set based on actual player identity
+  private nearbyJake: BartenderNPC | null = null;
 
   // Character data
   private playerCharacter: PlayerCharacter;
@@ -319,16 +321,14 @@ class Player {
       }
     }
 
-    // Check for Enter key to start chatting
-    if (inputHandler.wasKeyJustPressed('Enter') && !this.isChatting) {
-      this.startChatting();
-    }
+    // Note: Enter key handling is now done in the global keyboard listener only
+    // This prevents conflicts between the two input systems
   }
 
   private startChatting(): void {
     this.isChatting = true;
     this.currentMessage = '';
-    console.log('Started chatting mode');
+    console.log('💬 Started chatting mode - bubble should appear');
   }
 
   private cancelChatting(): void {
@@ -339,12 +339,24 @@ class Player {
 
   private sendMessage(): void {
     if (this.currentMessage.trim()) {
-      this.displayMessage = this.currentMessage.trim();
-      this.messageTimer = this.messageDuration;
-      console.log('Player said:', this.displayMessage);
+      const messageToSend = this.currentMessage.trim();
+      console.log('💬 Player said:', messageToSend);
+      
+      // Show the message in a bubble for a few seconds
+      this.displayMessage = messageToSend;
+      this.messageTimer = this.messageDuration; // 3 seconds
+      
+      // If near Jake, send message to him
+      if (this.nearbyJake) {
+        console.log('🍺 Sending message to Jake:', messageToSend);
+        this.nearbyJake.respondToPlayer(messageToSend);
+      }
     }
+    
+    // Clear chat input state (stop input mode)
     this.isChatting = false;
     this.currentMessage = '';
+    console.log('💬 Message sent, showing in bubble for 3 seconds');
   }
 
   private handleChatInput(event: KeyboardEvent): void {
@@ -619,6 +631,30 @@ class Player {
       if (fridgeManager.getInputText().length < 50) { // Character limit
         fridgeManager.handleInputCharacter(event.key);
       }
+    }
+  }
+
+  // Jake interaction methods
+  public setNearbyJake(jake: BartenderNPC | null): void {
+    this.nearbyJake = jake;
+    if (jake) {
+      console.log('🍺 Player is now near Jake');
+    } else {
+      console.log('🍺 Player left Jake\'s area');
+    }
+  }
+
+  public isNearJake(): boolean {
+    return this.nearbyJake !== null;
+  }
+
+  // Debug method to test Jake manually
+  public testJakeResponse(): void {
+    if (this.nearbyJake) {
+      console.log('🧪 Testing Jake response...');
+      this.nearbyJake.respondToPlayer('Hello Jake, this is a test message!');
+    } else {
+      console.log('🧪 No Jake nearby to test');
     }
   }
 

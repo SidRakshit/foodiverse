@@ -215,7 +215,14 @@ class SceneManager {
   }
 
   public update(deltaTime: number): void {
-    this.currentScene.update(deltaTime);
+    // Pass player to scene update for proximity detection
+    if (this.currentScene.update.length > 1) {
+      // Scene accepts player parameter
+      (this.currentScene as any).update(deltaTime, this.player);
+    } else {
+      // Scene only accepts deltaTime
+      this.currentScene.update(deltaTime);
+    }
     this.checkForSceneTransition();
   }
 
